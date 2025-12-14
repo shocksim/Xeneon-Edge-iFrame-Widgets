@@ -1,0 +1,1 @@
+These are formatted iframe HTML widgets that you can copy and paste into the iframe widget "code" form in iCUE. This will draw a webpage and pull scores or whatever data from a web api somewhere or tell you how to go sign up for your own personal/free api. 

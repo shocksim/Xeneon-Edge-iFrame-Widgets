@@ -3,170 +3,231 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NBA Live Score Widget</title>
+    <title>NBA Live Score Widget (Settings)</title>
     <style>
         :root {
             --bg-color: #1e1e1e;
             --card-bg: #2a2a2a;
             --text-main: #ffffff;
             --text-sub: #b0b0b0;
-            --accent: #00d2be; /* Kept teal for consistency across your widgets */
+            --accent: #00d2be; /* Teal accent */
+            --modal-bg: rgba(0, 0, 0, 0.85);
             --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
         }
 
         body {
-            margin: 0;
-            padding: 0;
-            background-color: var(--bg-color);
-            color: var(--text-main);
-            font-family: var(--font-family);
-            overflow-x: hidden;
+            margin: 0; padding: 0; background-color: var(--bg-color); color: var(--text-main);
+            font-family: var(--font-family); overflow-x: hidden;
+            display: flex; flex-direction: column; min-height: 100vh;
         }
 
-        /* --- CUSTOM SCROLLBAR STYLING --- */
-        html {
-            scrollbar-width: thin;
-            scrollbar-color: var(--card-bg) var(--bg-color);
-        }
+        /* --- Scrollbar --- */
+        html { scrollbar-width: thin; scrollbar-color: var(--card-bg) var(--bg-color); }
         ::-webkit-scrollbar { width: 10px; }
         ::-webkit-scrollbar-track { background: var(--bg-color); }
-        ::-webkit-scrollbar-thumb {
-            background-color: var(--card-bg);
-            border-radius: 10px;
-            border: 2px solid var(--bg-color);
-        }
+        ::-webkit-scrollbar-thumb { background-color: var(--card-bg); border-radius: 10px; border: 2px solid var(--bg-color); }
         ::-webkit-scrollbar-thumb:hover { background-color: #3d3d3d; }
-        /* -------------------------------- */
 
-        #widget-container {
-            padding: 16px;
-            max-width: 100%;
-        }
+        #widget-container { padding: 16px; max-width: 100%; flex-grow: 1; padding-bottom: 40px; }
 
+        /* --- Header --- */
         header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 16px;
-            padding-bottom: 8px;
-            border-bottom: 2px solid #444;
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 16px; padding-bottom: 8px; border-bottom: 2px solid #444;
         }
 
-        h2 {
-            margin: 0;
-            font-size: 18px;
-            text-transform: uppercase;
-            letter-spacing: 1.2px;
-        }
+        .header-left { display: flex; flex-direction: column; gap: 4px; }
+
+        h2 { margin: 0; font-size: 18px; text-transform: uppercase; letter-spacing: 1.2px; }
 
         .live-indicator {
-            font-size: 13px;
-            color: var(--accent);
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            font-weight: 600;
+            font-size: 11px; color: var(--accent); display: flex; align-items: center; gap: 6px; font-weight: 600;
         }
         
         .dot {
-            height: 10px;
-            width: 10px;
-            background-color: var(--accent);
-            border-radius: 50%;
-            display: inline-block;
-            animation: pulse 2s infinite;
+            height: 8px; width: 8px; background-color: var(--accent); border-radius: 50%;
+            display: inline-block; animation: pulse 2s infinite;
         }
 
+        /* --- Settings Button --- */
+        .settings-btn {
+            background: none; border: none; cursor: pointer; color: var(--text-sub);
+            padding: 8px; border-radius: 50%; transition: color 0.2s, background 0.2s;
+        }
+        .settings-btn:hover { color: var(--text-main); background: rgba(255,255,255,0.1); }
+        .settings-btn svg { width: 20px; height: 20px; display: block; }
+
+        /* --- Scoreboard --- */
         #scoreboard {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-            gap: 16px;
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px;
         }
 
         .game-card {
-            background-color: var(--card-bg);
-            border-radius: 12px;
-            padding: 16px;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            box-shadow: 0 6px 12px rgba(0,0,0,0.3);
-            transition: transform 0.2s;
+            background-color: var(--card-bg); border-radius: 12px; padding: 16px;
+            display: flex; flex-direction: column; gap: 12px;
+            box-shadow: 0 6px 12px rgba(0,0,0,0.3); transition: transform 0.2s;
+            position: relative;
+            border: 1px solid transparent;
+        }
+        
+        /* Highlight Favorite Team Card */
+        .game-card.favorite-game {
+            border-color: var(--accent);
+            background: linear-gradient(145deg, var(--card-bg), #202835);
+        }
+        .fav-star {
+            position: absolute; top: 10px; left: 10px; color: var(--accent); font-size: 10px; font-weight: 700; letter-spacing: 0.5px;
         }
 
-        .game-status {
-            font-size: 14px;
-            color: var(--text-sub);
-            text-align: right;
-            font-weight: 600;
-        }
-
-        .team-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .team-info {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .team-logo {
-            width: 42px;
-            height: 42px;
-            object-fit: contain;
-            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
-        }
-
-        .team-name {
-            font-weight: 700;
-            font-size: 20px;
-            letter-spacing: 0.5px;
-        }
-
-        .score {
-            font-size: 24px;
-            font-weight: 800;
-            font-variant-numeric: tabular-nums;
-        }
-
+        .game-status { font-size: 14px; color: var(--text-sub); text-align: right; font-weight: 600; }
+        .team-row { display: flex; justify-content: space-between; align-items: center; }
+        .team-info { display: flex; align-items: center; gap: 12px; }
+        .team-logo { width: 42px; height: 42px; object-fit: contain; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5)); }
+        .team-name { font-weight: 700; font-size: 20px; letter-spacing: 0.5px; }
+        .score { font-size: 24px; font-weight: 800; font-variant-numeric: tabular-nums; }
         .winner { color: var(--text-main); }
         .loser { color: var(--text-sub); }
+        .message { text-align: center; padding: 30px; color: var(--text-sub); font-size: 16px; grid-column: 1 / -1; }
 
-        .message {
+        /* --- Settings Modal --- */
+        #settings-modal {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--modal-bg); z-index: 100;
+            justify-content: center; align-items: center;
+            backdrop-filter: blur(4px);
+        }
+
+        .modal-content {
+            background: var(--bg-color); padding: 24px; border-radius: 12px;
+            width: 300px; border: 1px solid #444;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
             text-align: center;
-            padding: 30px;
-            color: var(--text-sub);
-            font-size: 16px;
-            grid-column: 1 / -1;
         }
 
-        @keyframes pulse {
-            0% { opacity: 1; }
-            50% { opacity: 0.4; }
-            100% { opacity: 1; }
+        .modal-title { margin-top: 0; font-size: 18px; margin-bottom: 20px; }
+        
+        select {
+            width: 100%; padding: 10px; margin-bottom: 20px;
+            background: var(--card-bg); color: #fff; border: 1px solid #555;
+            border-radius: 6px; font-size: 14px;
         }
+
+        .modal-actions { display: flex; gap: 10px; justify-content: center; }
+        
+        button.primary {
+            background: var(--accent); color: #000; border: none; padding: 8px 16px;
+            border-radius: 6px; font-weight: 700; cursor: pointer;
+        }
+        button.secondary {
+            background: transparent; color: var(--text-sub); border: 1px solid #555;
+            padding: 8px 16px; border-radius: 6px; cursor: pointer;
+        }
+        button:hover { opacity: 0.9; }
+
+        /* --- Attribution Footer --- */
+        .attribution {
+            position: fixed; bottom: 10px; right: 15px;
+            font-size: 10px; color: var(--text-sub); opacity: 0.6;
+            pointer-events: none;
+        }
+
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
     </style>
 </head>
 <body>
 
 <div id="widget-container">
     <header>
-        <h2>NBA Scores</h2>
-        <div class="live-indicator"><span class="dot"></span> LIVE DATA</div>
+        <div class="header-left">
+            <h2>NBA Scores</h2>
+            <div class="live-indicator"><span class="dot"></span> LIVE DATA</div>
+        </div>
+        <button class="settings-btn" onclick="openSettings()" title="Settings">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+        </button>
     </header>
     <div id="scoreboard">
         <div class="message">Loading scores...</div>
     </div>
 </div>
 
+<div class="attribution">Data provided by ESPN</div>
+
+<div id="settings-modal">
+    <div class="modal-content">
+        <h3 class="modal-title">Widget Settings</h3>
+        <div style="text-align: left; margin-bottom: 8px; font-size: 12px; color:#aaa;">Favorite Team (Pins to top)</div>
+        <select id="team-selector">
+            <option value="">-- None --</option>
+            <optgroup label="Eastern Conference">
+                <option value="ATL">Atlanta Hawks</option>
+                <option value="BOS">Boston Celtics</option>
+                <option value="BKN">Brooklyn Nets</option>
+                <option value="CHA">Charlotte Hornets</option>
+                <option value="CHI">Chicago Bulls</option>
+                <option value="CLE">Cleveland Cavaliers</option>
+                <option value="DET">Detroit Pistons</option>
+                <option value="IND">Indiana Pacers</option>
+                <option value="MIA">Miami Heat</option>
+                <option value="MIL">Milwaukee Bucks</option>
+                <option value="NYK">New York Knicks</option>
+                <option value="ORL">Orlando Magic</option>
+                <option value="PHI">Philadelphia 76ers</option>
+                <option value="TOR">Toronto Raptors</option>
+                <option value="WSH">Washington Wizards</option>
+            </optgroup>
+            <optgroup label="Western Conference">
+                <option value="DAL">Dallas Mavericks</option>
+                <option value="DEN">Denver Nuggets</option>
+                <option value="GS">Golden State Warriors</option>
+                <option value="HOU">Houston Rockets</option>
+                <option value="LAC">LA Clippers</option>
+                <option value="LAL">Los Angeles Lakers</option>
+                <option value="MEM">Memphis Grizzlies</option>
+                <option value="MIN">Minnesota Timberwolves</option>
+                <option value="NO">New Orleans Pelicans</option>
+                <option value="OKC">Oklahoma City Thunder</option>
+                <option value="PHX">Phoenix Suns</option>
+                <option value="POR">Portland Trail Blazers</option>
+                <option value="SAC">Sacramento Kings</option>
+                <option value="SA">San Antonio Spurs</option>
+                <option value="UTAH">Utah Jazz</option>
+            </optgroup>
+        </select>
+        <div class="modal-actions">
+            <button class="secondary" onclick="closeSettings()">Cancel</button>
+            <button class="primary" onclick="saveSettings()">Save</button>
+        </div>
+    </div>
+</div>
+
 <script>
-    // CHANGED: Pointing to NBA endpoint
     const API_URL = "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard";
     const REFRESH_RATE = 60000;
+    
+    // Config: Load from local storage
+    let favoriteTeam = localStorage.getItem('nba_fav_team') || "";
 
+    // -- Settings Logic --
+    function openSettings() {
+        document.getElementById('team-selector').value = favoriteTeam;
+        document.getElementById('settings-modal').style.display = 'flex';
+    }
+
+    function closeSettings() {
+        document.getElementById('settings-modal').style.display = 'none';
+    }
+
+    function saveSettings() {
+        const selector = document.getElementById('team-selector');
+        favoriteTeam = selector.value;
+        localStorage.setItem('nba_fav_team', favoriteTeam);
+        
+        closeSettings();
+        fetchScores(); // Refresh immediately to re-sort
+    }
+
+    // -- Scoreboard Logic --
     async function fetchScores() {
         try {
             const response = await fetch(API_URL);
@@ -191,21 +252,40 @@
             return;
         }
 
+        // --- SORTING LOGIC ---
+        if (favoriteTeam) {
+            games.sort((a, b) => {
+                const aCompetitors = a.competitions[0].competitors;
+                const bCompetitors = b.competitions[0].competitors;
+                
+                const aHasFav = aCompetitors.some(c => c.team.abbreviation === favoriteTeam);
+                const bHasFav = bCompetitors.some(c => c.team.abbreviation === favoriteTeam);
+
+                if (aHasFav && !bHasFav) return -1;
+                if (!aHasFav && bHasFav) return 1;
+                return 0;
+            });
+        }
+        // ---------------------
+
         games.forEach(game => {
             const competition = game.competitions[0];
-            const status = game.status.type.shortDetail; // e.g. "Final", "Q4 - 4:20"
+            const status = game.status.type.shortDetail;
             const isCompleted = game.status.type.completed;
 
             const homeTeam = competition.competitors.find(c => c.homeAway === 'home');
             const awayTeam = competition.competitors.find(c => c.homeAway === 'away');
 
-            // CHANGED: Pointing to NBA high-res logo path
             const getLogo = (abbrev) => `https://a.espncdn.com/i/teamlogos/nba/500/${abbrev}.png`;
 
+            // Check if this card contains the favorite team
+            const isFavGame = favoriteTeam && (homeTeam.team.abbreviation === favoriteTeam || awayTeam.team.abbreviation === favoriteTeam);
+
             const card = document.createElement('div');
-            card.className = 'game-card';
+            card.className = isFavGame ? 'game-card favorite-game' : 'game-card';
             
             card.innerHTML = `
+                ${isFavGame ? '<div class="fav-star">★ FAVORITE</div>' : ''}
                 <div class="game-status">${status}</div>
                 
                 <div class="team-row ${isCompleted && Number(awayTeam.score) < Number(homeTeam.score) ? 'loser' : 'winner'}">

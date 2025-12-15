@@ -12,6 +12,17 @@ The rest of them don't require any extra API keys.
 
 -----------------------------------------------------------------------
 
+
+NFL Scores
+
+![nfl xeneon edge widget](images/nfl.png)
+
+
+Pro Football (Soccer) Scores
+
+![epl plus xeneon edge widget](images/futbol.png)
+
+
 Counter-Strike 2 eSports Tracker
 
 ![CS2 Xeneon Edge Widget](images/cs2.png)
@@ -31,15 +42,6 @@ NBA Scores
 
 ![nba scores xeneon edge widget](images/nba.png)
 
-
-NFL Scores
-
-![nfl xeneon edge widget](images/nfl.png)
-
-
-Pro Football (Soccer) Scores
-
-![epl plus xeneon edge widget](images/futbol.png)
 
 
 Formula 1 Next Race Tracker

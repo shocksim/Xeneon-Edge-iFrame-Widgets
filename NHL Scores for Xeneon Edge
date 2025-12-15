@@ -127,9 +127,22 @@
         /* --- Attribution Footer --- */
         .attribution {
             position: fixed; bottom: 10px; right: 15px;
-            font-size: 10px; color: var(--text-sub); opacity: 0.6;
-            pointer-events: none;
+            font-size: 10px; color: var(--text-sub); opacity: 0.8;
+            pointer-events: auto;
+            display: flex; align-items: center; gap: 6px;
+            z-index: 50;
         }
+        
+        .attribution a {
+            display: flex; align-items: center; text-decoration: none; border: none;
+        }
+
+        .espn-logo {
+            height: 12px; width: auto;
+            display: block;
+        }
+
+        .attribution a:hover { opacity: 1; }
 
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
     </style>
@@ -151,7 +164,12 @@
     </div>
 </div>
 
-<div class="attribution">Data provided by ESPN</div>
+<div class="attribution">
+    Data provided by 
+    <a href="http://espn.go.com" target="_blank" rel="noopener noreferrer">
+        <img src="https://github.com/shocksim/Xeneon-Edge-iFrame-Widgets/blob/main/images/ESPN_logos.png?raw=true" alt="ESPN" class="espn-logo">
+    </a>
+</div>
 
 <div id="settings-modal">
     <div class="modal-content">

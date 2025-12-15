@@ -3,15 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EPL Live Score Widget</title>
+    <title>Global Soccer Scoreboard</title>
     <style>
         :root {
             --bg-color: #1e1e1e;
             --card-bg: #2a2a2a;
             --text-main: #ffffff;
             --text-sub: #b0b0b0;
-            --accent: #38003c; /* EPL Purple accent */
-            --highlight: #00ff85; /* EPL Green highlight */
+            --accent: #38003c;
+            --highlight: #00ff85;
+            --border: #444;
             --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
         }
 
@@ -24,33 +25,29 @@
             overflow-x: hidden;
         }
 
-        /* --- CUSTOM SCROLLBAR STYLING --- */
-        html {
-            scrollbar-width: thin;
-            scrollbar-color: var(--card-bg) var(--bg-color);
-        }
+        /* --- SCROLLBAR --- */
+        html { scrollbar-width: thin; scrollbar-color: var(--card-bg) var(--bg-color); }
         ::-webkit-scrollbar { width: 10px; }
         ::-webkit-scrollbar-track { background: var(--bg-color); }
-        ::-webkit-scrollbar-thumb {
-            background-color: var(--card-bg);
-            border-radius: 10px;
-            border: 2px solid var(--bg-color);
-        }
-        ::-webkit-scrollbar-thumb:hover { background-color: #3d3d3d; }
-        /* -------------------------------- */
+        ::-webkit-scrollbar-thumb { background-color: var(--card-bg); border-radius: 10px; border: 2px solid var(--bg-color); }
 
         #widget-container {
             padding: 16px;
-            max-width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
         }
 
         header {
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .header-top {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 16px;
-            padding-bottom: 8px;
-            border-bottom: 2px solid #444;
+            margin-bottom: 15px;
         }
 
         h2 {
@@ -70,17 +67,81 @@
         }
         
         .dot {
-            height: 10px;
-            width: 10px;
+            height: 10px; width: 10px;
             background-color: var(--highlight);
             border-radius: 50%;
             display: inline-block;
             animation: pulse 2s infinite;
         }
 
+        /* --- CONTROLS SECTION --- */
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            align-items: center;
+            background: #252525;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .label {
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--text-sub);
+            text-transform: uppercase;
+        }
+
+        /* Checkbox Styling as Tags */
+        .league-toggles {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .league-checkbox {
+            display: none;
+        }
+
+        .league-label {
+            font-size: 12px;
+            padding: 6px 12px;
+            background-color: #333;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid transparent;
+            user-select: none;
+        }
+
+        .league-checkbox:checked + .league-label {
+            background-color: var(--highlight);
+            color: #000;
+            font-weight: 700;
+        }
+
+        /* Dropdown Styling */
+        select {
+            background-color: #333;
+            color: var(--text-main);
+            border: 1px solid var(--border);
+            padding: 6px 10px;
+            border-radius: 4px;
+            font-size: 14px;
+            outline: none;
+        }
+
+        /* --- SCOREBOARD GRID --- */
         #scoreboard {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
             gap: 16px;
         }
 
@@ -92,7 +153,19 @@
             flex-direction: column;
             gap: 12px;
             box-shadow: 0 6px 12px rgba(0,0,0,0.3);
-            transition: transform 0.2s;
+            position: relative;
+        }
+
+        .league-badge {
+            position: absolute;
+            top: 10px;
+            left: 12px;
+            font-size: 10px;
+            background: #444;
+            padding: 2px 6px;
+            border-radius: 4px;
+            color: #ddd;
+            font-weight: bold;
         }
 
         .game-status {
@@ -100,6 +173,7 @@
             color: var(--text-sub);
             text-align: right;
             font-weight: 600;
+            min-height: 19px; /* preventing layout jump */
         }
 
         .team-row {
@@ -115,20 +189,18 @@
         }
 
         .team-logo {
-            width: 42px;
-            height: 42px;
+            width: 32px;
+            height: 32px;
             object-fit: contain;
-            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
         }
 
         .team-name {
             font-weight: 700;
-            font-size: 20px;
-            letter-spacing: 0.5px;
+            font-size: 16px;
         }
 
         .score {
-            font-size: 24px;
+            font-size: 20px;
             font-weight: 800;
             font-variant-numeric: tabular-nums;
         }
@@ -140,14 +212,28 @@
             text-align: center;
             padding: 30px;
             color: var(--text-sub);
-            font-size: 16px;
             grid-column: 1 / -1;
         }
 
+        /* --- FOOTER --- */
+        .attribution {
+            margin-top: 30px;
+            text-align: center;
+            font-size: 12px;
+            color: #555;
+            border-top: 1px solid #333;
+            padding-top: 10px;
+        }
+        .attribution a { color: #777; text-decoration: none; }
+
         @keyframes pulse {
-            0% { opacity: 1; }
-            50% { opacity: 0.4; }
-            100% { opacity: 1; }
+            0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; }
+        }
+
+        /* Highlight favorite team */
+        .favorite-highlight {
+            border: 1px solid var(--highlight);
+            box-shadow: 0 0 10px rgba(0, 255, 133, 0.1);
         }
     </style>
 </head>
@@ -155,70 +241,212 @@
 
 <div id="widget-container">
     <header>
-        <h2>Premier League</h2>
-        <div class="live-indicator"><span class="dot"></span> LIVE DATA</div>
+        <div class="header-top">
+            <h2>Matchday Live</h2>
+            <div class="live-indicator"><span class="dot"></span> LIVE DATA</div>
+        </div>
+        
+        <div class="controls">
+            <div class="control-group">
+                <span class="label">Leagues:</span>
+                <div class="league-toggles">
+                    <input type="checkbox" id="epl" class="league-checkbox" value="eng.1" checked>
+                    <label for="epl" class="league-label">EPL</label>
+
+                    <input type="checkbox" id="laliga" class="league-checkbox" value="esp.1">
+                    <label for="laliga" class="league-label">La Liga</label>
+
+                    <input type="checkbox" id="bundes" class="league-checkbox" value="ger.1">
+                    <label for="bundes" class="league-label">Bundesliga</label>
+
+                    <input type="checkbox" id="seriea" class="league-checkbox" value="ita.1">
+                    <label for="seriea" class="league-label">Serie A</label>
+
+                    <input type="checkbox" id="ligue1" class="league-checkbox" value="fra.1">
+                    <label for="ligue1" class="league-label">Ligue 1</label>
+                </div>
+             </div>
+
+             <div class="control-group">
+                <span class="label">Filter Team:</span>
+                <select id="teamSelect">
+                    <option value="all">Show All</option>
+                </select>
+            </div>
+        </div>
     </header>
+
     <div id="scoreboard">
         <div class="message">Loading scores...</div>
+    </div>
+
+    <div class="attribution">
+        Data provided by ESPN API | Widget Design v2.1
     </div>
 </div>
 
 <script>
-    // CHANGED: Pointing to EPL endpoint
-    const API_URL = "https://site.api.espn.com/apis/site/v2/sports/soccer/eng.1/scoreboard";
+    // Configuration for endpoints
+    const BASE_URL = "https://site.api.espn.com/apis/site/v2/sports/soccer/";
     const REFRESH_RATE = 60000;
+    
+    // State
+    let allGamesCache = []; 
+    let teamList = new Set();
+    let currentFavorite = localStorage.getItem('soccer_fav_team') || 'all';
+
+    // Map internal codes to display names for badges
+    const LEAGUE_NAMES = {
+        'eng.1': 'EPL',
+        'esp.1': 'LIGA',
+        'ger.1': 'BUND',
+        'ita.1': 'SER A',
+        'fra.1': 'LIG 1'
+    };
+
+    // Initialize inputs
+    document.getElementById('teamSelect').value = currentFavorite;
+    document.querySelectorAll('.league-checkbox').forEach(box => {
+        box.addEventListener('change', () => {
+            fetchScores(); // Re-fetch when leagues change
+        });
+    });
+
+    document.getElementById('teamSelect').addEventListener('change', (e) => {
+        currentFavorite = e.target.value;
+        localStorage.setItem('soccer_fav_team', currentFavorite);
+        renderGames(allGamesCache); // Just re-render, don't re-fetch
+    });
 
     async function fetchScores() {
-        try {
-            const response = await fetch(API_URL);
-            if (!response.ok) throw new Error('Network response was not ok');
-            const data = await response.json();
-            renderGames(data);
-        } catch (error) {
-            console.error("Error fetching EPL scores:", error);
-            document.getElementById('scoreboard').innerHTML = 
-                '<div class="message">Unable to load scores. <br> Check console for details.</div>';
-        }
-    }
-
-    function renderGames(data) {
         const scoreboard = document.getElementById('scoreboard');
-        scoreboard.innerHTML = '';
+        
+        // Get checked leagues
+        const activeLeagues = Array.from(document.querySelectorAll('.league-checkbox:checked'))
+                                   .map(cb => cb.value);
 
-        const games = data.events;
-
-        if (!games || games.length === 0) {
-            scoreboard.innerHTML = '<div class="message">No matches scheduled for today.</div>';
+        if (activeLeagues.length === 0) {
+            scoreboard.innerHTML = '<div class="message">Please select at least one league.</div>';
             return;
         }
 
+        // Show loading only if it's the initial load or empty
+        if(scoreboard.children.length === 0 || scoreboard.querySelector('.message')) {
+            scoreboard.innerHTML = '<div class="message">Loading scores...</div>';
+        }
+
+        try {
+            // Create an array of fetch promises
+            const promises = activeLeagues.map(leagueCode => 
+                fetch(`${BASE_URL}${leagueCode}/scoreboard`)
+                    .then(res => res.json())
+                    .then(data => ({ code: leagueCode, data: data }))
+            );
+
+            const results = await Promise.all(promises);
+            
+            // Combine all events into one array
+            allGamesCache = [];
+            
+            results.forEach(result => {
+                const leagueCode = result.code;
+                if(result.data.events) {
+                    // Tag each event with its league code for the badge
+                    const taggedEvents = result.data.events.map(ev => ({...ev, leagueCode}));
+                    allGamesCache = allGamesCache.concat(taggedEvents);
+                }
+            });
+
+            // Sort games: Live first, then by time
+            allGamesCache.sort((a, b) => {
+                // Simple sort logic: date
+                return new Date(a.date) - new Date(b.date);
+            });
+
+            updateTeamDropdown(allGamesCache);
+            renderGames(allGamesCache);
+
+        } catch (error) {
+            console.error("Error fetching scores:", error);
+            scoreboard.innerHTML = '<div class="message">Unable to load scores. API may be rate limited.</div>';
+        }
+    }
+
+    function updateTeamDropdown(games) {
+        const select = document.getElementById('teamSelect');
+        const currentSelection = select.value;
+        
+        // Extract all teams from current games
+        let teams = [];
         games.forEach(game => {
+            game.competitions[0].competitors.forEach(comp => {
+                teams.push({
+                    id: comp.team.id,
+                    name: comp.team.displayName
+                });
+            });
+        });
+
+        // Remove duplicates and sort alpha
+        teams = teams.filter((v,i,a)=>a.findIndex(t=>(t.id===v.id))===i);
+        teams.sort((a,b) => a.name.localeCompare(b.name));
+
+        // Rebuild options
+        select.innerHTML = '<option value="all">Show All</option>';
+        teams.forEach(team => {
+            const option = document.createElement('option');
+            option.value = team.id;
+            option.textContent = team.name;
+            select.appendChild(option);
+        });
+
+        // Restore selection if it still exists in the list
+        if (teams.some(t => t.id === currentSelection)) {
+            select.value = currentSelection;
+        } else {
+            select.value = 'all';
+        }
+    }
+
+    function renderGames(games) {
+        const scoreboard = document.getElementById('scoreboard');
+        scoreboard.innerHTML = '';
+
+        // Filter based on favorite selection
+        const filteredGames = currentFavorite === 'all' 
+            ? games 
+            : games.filter(g => {
+                const comps = g.competitions[0].competitors;
+                return comps.some(c => c.team.id === currentFavorite);
+            });
+
+        if (filteredGames.length === 0) {
+            scoreboard.innerHTML = '<div class="message">No matches found for current selection.</div>';
+            return;
+        }
+
+        filteredGames.forEach(game => {
             const competition = game.competitions[0];
-            const status = game.status.type.shortDetail; // e.g. "FT", "HT", "45+2'"
+            const status = game.status.type.shortDetail;
             const isCompleted = game.status.type.completed;
+            const leagueName = LEAGUE_NAMES[game.leagueCode] || 'SOC';
 
             const homeTeam = competition.competitors.find(c => c.homeAway === 'home');
             const awayTeam = competition.competitors.find(c => c.homeAway === 'away');
 
-            // Note: Soccer uses team IDs/URLs, not usually abbreviations.
-            // We use the provided URL but check if we need to swap dimensions for quality.
-            const getLogo = (url) => {
-                if(!url) return '';
-                // Attempt to force higher res if the URL contains dimensions
-                return url.replace("&w=50&h=50", "&w=500&h=500"); 
-            };
+            const isFavGame = (homeTeam.team.id === currentFavorite || awayTeam.team.id === currentFavorite);
 
             const card = document.createElement('div');
-            card.className = 'game-card';
+            card.className = `game-card ${isFavGame ? 'favorite-highlight' : ''}`;
             
-            // NOTE: Swapped order for Soccer (Home usually listed first/top)
             card.innerHTML = `
+                <div class="league-badge">${leagueName}</div>
                 <div class="game-status">${status}</div>
                 
                 <div class="team-row ${isCompleted && Number(homeTeam.score) < Number(awayTeam.score) ? 'loser' : 'winner'}">
                     <div class="team-info">
                         <img src="${homeTeam.team.logo}" class="team-logo" alt="${homeTeam.team.abbreviation}">
-                        <span class="team-name">${homeTeam.team.abbreviation}</span>
+                        <span class="team-name">${homeTeam.team.abbreviation || homeTeam.team.shortDisplayName}</span>
                     </div>
                     <span class="score">${homeTeam.score}</span>
                 </div>
@@ -226,7 +454,7 @@
                 <div class="team-row ${isCompleted && Number(awayTeam.score) < Number(homeTeam.score) ? 'loser' : 'winner'}">
                     <div class="team-info">
                         <img src="${awayTeam.team.logo}" class="team-logo" alt="${awayTeam.team.abbreviation}">
-                        <span class="team-name">${awayTeam.team.abbreviation}</span>
+                        <span class="team-name">${awayTeam.team.abbreviation || awayTeam.team.shortDisplayName}</span>
                     </div>
                     <span class="score">${awayTeam.score}</span>
                 </div>
@@ -236,6 +464,7 @@
         });
     }
 
+    // Initial Load
     fetchScores();
     setInterval(fetchScores, REFRESH_RATE);
 </script>

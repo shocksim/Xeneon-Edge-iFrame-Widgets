@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Lunch Roulette</title>
+    <style>
+        :root {
+            --primary: #007bff;
+            --primary-hover: #0056b3;
+            --bg-body: #ffffff;
+            --bg-sidebar: #f4f4f4;
+            --text-main: #333333;
+            --text-muted: #666666;
+            --border: #cccccc;
+            --card-bg: #ffffff;
+            --card-shadow: rgba(0,0,0,0.1);
+        }
+
+        body.dark-mode {
+            --primary: #bb86fc;
+            --primary-hover: #9965f4;
+            --bg-body: #121212;
+            --bg-sidebar: #1e1e1e;
+            --text-main: #e0e0e0;
+            --text-muted: #aaaaaa;
+            --border: #444444;
+            --card-bg: #2c2c2c;
+            --card-shadow: rgba(0,0,0,0.5);
+        }
+
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; display: flex; height: 100vh; color: var(--text-main); background: var(--bg-body); transition: background 0.3s, color 0.3s; }
+        
+        #sidebar { 
+            width: 350px; 
+            padding: 20px; 
+            background: var(--bg-sidebar); 
+            border-right: 1px solid var(--border); 
+            display: flex; 
+            flex-direction: column; 
+            gap: 15px; 
+            position: relative; 
+            transition: background 0.3s, border 0.3s;
+            z-index: 2;
+        }
+
+        #header-row { display: flex; justify-content: space-between; align-items: center; }
+        h2 { margin: 0; font-size: 1.5em; }
+        
+        /* Settings Cog */
+        #settings-btn { background: none; border: none; font-size: 1.5em; cursor: pointer; padding: 0; color: var(--text-muted); transition: transform 0.3s; }
+        #settings-btn:hover { transform: rotate(90deg); color: var(--primary); }
+
+        /* Settings Panel Overlay */
+        #settings-panel {
+            display: none;
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 15px var(--card-shadow);
+        }
+        .setting-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; font-size: 0.9em; }
+
+        .control-group { margin-bottom: 5px; }
+        label { display: block; font-weight: bold; margin-bottom: 5px; font-size: 0.9em; }
+        input[type="text"], select { 
+            width: 100%; padding: 10px; box-sizing: border-box; 
+            border: 1px solid var(--border); 
+            border-radius: 4px; 
+            background: var(--bg-body); 
+            color: var(--text-main);
+        }
+        
+        /* Range Slider Styling */
+        input[type=range] { width: 100%; accent-color: var(--primary); }
+
+        button { 
+            width: 100%; padding: 12px; cursor: pointer; 
+            background: var(--primary); color: white; border: none; 
+            border-radius: 4px; font-size: 16px; font-weight: bold;
+            transition: background 0.2s, transform 0.1s;
+        }
+        button:hover { background: var(--primary-hover); }
+        button:active { transform: scale(0.98); }
+        button:disabled { background: var(--text-muted); cursor: not-allowed; opacity: 0.7; }
+        
+        button.secondary { background: #6c757d; margin-top: 5px; font-size: 0.9em; font-weight: normal; }
+        button.danger { background: #dc3545; margin-top: 5px; font-size: 0.9em; font-weight: normal; }
+        
+        #result-card { 
+            display: none; 
+            background: var(--card-bg); 
+            padding: 15px; 
+            border-radius: 8px; 
+            box-shadow: 0 2px 10px var(--card-shadow); 
+            border-left: 5px solid var(--primary); 
+        }
+        #result-name { font-size: 1.3em; font-weight: bold; margin-bottom: 5px; }
+        #result-address { font-size: 0.9em; color: var(--text-muted); margin-bottom: 10px; }
+        
+        #history-log { font-size: 0.8em; color: var(--text-muted); margin-top: 20px; border-top: 1px solid var(--border); padding-top: 10px;}
+        
+        #map { flex-grow: 1; height: 100%; background: #e9e9e9; }
+    </style>
+</head>
+<body>
+
+<div id="sidebar">
+    <div id="header-row">
+        <h2>🍽️ Lunch Roulette</h2>
+        <button id="settings-btn" onclick="toggleSettings()" title="Settings">⚙️</button>
+    </div>
+
+    <div id="settings-panel">
+        <div class="setting-row">
+            <span>Dark Mode</span>
+            <input type="checkbox" id="dark-mode-toggle" onchange="toggleDarkMode()">
+        </div>
+        <div class="setting-row">
+            <span>Theme Color</span>
+            <input type="color" id="theme-color-picker" value="#007bff" onchange="updateThemeColor(this.value)">
+        </div>
+        <div style="text-align: right; font-size: 0.8em;">
+            <a href="#" onclick="toggleSettings()" style="color:var(--text-muted); text-decoration:none;">Close</a>
+        </div>
+    </div>
+
+    <div class="control-group">
+        <label>Starting Address</label>
+        <input id="address-input" type="text" placeholder="Start typing address...">
+    </div>
+
+    <div class="control-group">
+        <label>Radius: <span id="radius-val">1.5</span> km</label>
+        <input id="radius-slider" type="range" min="0.5" max="10" step="0.5" value="1.5">
+    </div>
+
+    <div class="control-group">
+        <label>Cuisine (Optional)</label>
+        <input id="cuisine-input" type="text" placeholder="e.g. Mexican, Sushi, Pizza">
+    </div>
+
+    <button id="decide-btn" onclick="findLunch()">🎲 Spin the Wheel</button>
+
+    <div id="result-card">
+        <div id="result-name">Restaurant Name</div>
+        <div id="result-address">123 Main St</div>
+        <div id="result-rating"></div>
+        <br>
+        <button class="secondary" onclick="confirmChoice()">✅ Go Here</button>
+        <button class="danger" onclick="blacklistCurrent()">🚫 Blacklist & Re-roll</button>
+    </div>
+
+    <div id="history-log">
+        <strong>Recent History (7 Days):</strong>
+        <div id="history-list"></div>
+    </div>
+    
+    <div style="margin-top:auto">
+        <button class="secondary" style="font-size:0.8em; background:transparent; color:var(--text-muted); border:1px solid var(--border)" onclick="clearData()">Clear History</button>
+    </div>
+</div>
+
+<div id="map"></div>
+
+<script>
+    // --- APP STATE ---
+    let map, service, marker, circle, autocomplete, currentPlace, searchCenter;
+    let blacklist = JSON.parse(localStorage.getItem('lunchBlacklist')) || [];
+    let history = JSON.parse(localStorage.getItem('lunchHistory')) || [];
+    
+    // Load Settings
+    const savedTheme = localStorage.getItem('lunchThemeColor') || '#007bff';
+    const savedDarkMode = localStorage.getItem('lunchDarkMode') === 'true';
+
+    // --- INITIALIZATION ---
+    function initApp() {
+        // Apply saved settings
+        if(savedDarkMode) {
+            document.body.classList.add('dark-mode');
+            document.getElementById('dark-mode-toggle').checked = true;
+        }
+        updateThemeColor(savedTheme);
+        document.getElementById('theme-color-picker').value = savedTheme;
+    }
+    
+    // --- SETTINGS LOGIC ---
+    function toggleSettings() {
+        const panel = document.getElementById('settings-panel');
+        panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
+    }
+
+    function toggleDarkMode() {
+        document.body.classList.toggle('dark-mode');
+        localStorage.setItem('lunchDarkMode', document.body.classList.contains('dark-mode'));
+    }
+
+    function updateThemeColor(color) {
+        document.documentElement.style.setProperty('--primary', color);
+        // Create a slightly darker hover version
+        document.documentElement.style.setProperty('--primary-hover', adjustColor(color, -20));
+        localStorage.setItem('lunchThemeColor', color);
+        if(circle) {
+            circle.setOptions({ strokeColor: color, fillColor: color });
+        }
+        if(document.getElementById('result-card').style.display === 'block') {
+            document.getElementById('result-card').style.borderLeftColor = color;
+        }
+    }
+
+    // Helper to darken hex color for hover effect
+    function adjustColor(color, amount) {
+        return '#' + color.replace(/^#/, '').replace(/../g, color => ('0'+Math.min(255, Math.max(0, parseInt(color, 16) + amount)).toString(16)).substr(-2));
+    }
+
+    // --- MAP LOGIC ---
+    function initMap() {
+        initApp(); // Run UI setup
+
+        // Default: San Francisco (Fallback)
+        searchCenter = { lat: 37.7749, lng: -122.4194 }; 
+
+        map = new google.maps.Map(document.getElementById("map"), {
+            center: searchCenter,
+            zoom: 14,
+            mapTypeControl: false,
+            streetViewControl: false,
+            fullscreenControl: false
+        });
+
+        service = new google.maps.places.PlacesService(map);
+
+        const input = document.getElementById("address-input");
+        autocomplete = new google.maps.places.Autocomplete(input);
+        autocomplete.bindTo("bounds", map);
+
+        autocomplete.addListener("place_changed", () => {
+            const place = autocomplete.getPlace();
+            if (!place.geometry || !place.geometry.location) return;
+
+            searchCenter = place.geometry.location;
+            map.setCenter(searchCenter);
+            map.setZoom(14);
+            updateCircle();
+        });
+
+        document.getElementById("radius-slider").addEventListener("input", function() {
+            document.getElementById("radius-val").innerText = this.value;
+            updateCircle();
+        });
+        
+        updateHistoryDisplay();
+    }
+
+    function updateCircle() {
+        if (circle) circle.setMap(null);
+        
+        // Convert KM from slider to Meters for Google API
+        const km = parseFloat(document.getElementById("radius-slider").value);
+        const meters = km * 1000;
+        
+        const currentColor = getComputedStyle(document.documentElement).getPropertyValue('--primary').trim();
+
+        circle = new google.maps.Circle({
+            strokeColor: currentColor,
+            strokeOpacity: 0.8,
+            strokeWeight: 2,
+            fillColor: currentColor,
+            fillOpacity: 0.15,
+            map: map,
+            center: searchCenter,
+            radius: meters,
+            clickable: false 
+        });
+    }
+
+    function findLunch() {
+        if (!searchCenter) {
+            alert("Please select a location first.");
+            return;
+        }
+
+        const btn = document.getElementById("decide-btn");
+        btn.disabled = true;
+        btn.innerText = "⏳ Spinning...";
+
+        const km = parseFloat(document.getElementById("radius-slider").value);
+        const radiusMeters = km * 1000;
+        const cuisine = document.getElementById("cuisine-input").value;
+
+        const request = {
+            location: searchCenter,
+            radius: radiusMeters,
+            type: 'restaurant',
+            keyword: cuisine
+        };
+
+        service.nearbySearch(request, (results, status) => {
+            btn.disabled = false;
+            btn.innerText = "🎲 Spin the Wheel";
+
+            if (status === google.maps.places.PlacesServiceStatus.OK && results.length > 0) {
+                processResults(results);
+            } else {
+                if (status === "ZERO_RESULTS") {
+                    alert("No restaurants found! Try increasing the radius.");
+                } else {
+                    alert("Google API Error: " + status + "\n(Check API Key permissions if this persists)");
+                }
+            }
+        });
+    }
+
+    function processResults(results) {
+        // Filter Blacklist
+        let pool = results.filter(p => !blacklist.includes(p.place_id));
+        
+        // Filter History (Last 7 Days)
+        const oneWeekAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
+        const recentIds = history.filter(h => h.timestamp > oneWeekAgo).map(h => h.id);
+        pool = pool.filter(p => !recentIds.includes(p.place_id));
+
+        if (pool.length === 0) {
+            alert("No options left! You've either blacklisted or visited everything nearby recently.");
+            return;
+        }
+
+        const winner = pool[Math.floor(Math.random() * pool.length)];
+        displayResult(winner);
+    }
+
+    function displayResult(place) {
+        currentPlace = place;
+        
+        const card = document.getElementById("result-card");
+        card.style.display = "block";
+        // Ensure card border matches theme
+        card.style.borderLeftColor = getComputedStyle(document.documentElement).getPropertyValue('--primary');
+
+        document.getElementById("result-name").innerText = place.name;
+        document.getElementById("result-address").innerText = place.vicinity;
+        document.getElementById("result-rating").innerText = place.rating ? `⭐ ${place.rating} (${place.user_ratings_total})` : "No Rating";
+
+        if (marker) marker.setMap(null);
+        marker = new google.maps.Marker({
+            position: place.geometry.location,
+            map: map,
+            title: place.name,
+            animation: google.maps.Animation.DROP
+        });
+        
+        map.panTo(place.geometry.location);
+    }
+
+    function confirmChoice() {
+        if (!currentPlace) return;
+        history.push({ id: currentPlace.place_id, name: currentPlace.name, timestamp: Date.now() });
+        localStorage.setItem('lunchHistory', JSON.stringify(history));
+        
+        updateHistoryDisplay();
+        document.getElementById("result-card").style.display = "none";
+    }
+
+    function blacklistCurrent() {
+        if (!currentPlace) return;
+        if (confirm(`Never recommend ${currentPlace.name} again?`)) {
+            blacklist.push(currentPlace.place_id);
+            localStorage.setItem('lunchBlacklist', JSON.stringify(blacklist));
+            findLunch(); // Re-roll immediately
+        }
+    }
+
+    function updateHistoryDisplay() {
+        const container = document.getElementById("history-list");
+        container.innerHTML = "";
+        const oneWeekAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
+        const validHistory = history.filter(h => h.timestamp > oneWeekAgo);
+
+        if (validHistory.length === 0) {
+            container.innerHTML = "<i>No recent visits.</i>";
+            return;
+        }
+
+        validHistory.forEach(h => {
+            const div = document.createElement("div");
+            div.textContent = `• ${h.name}`;
+            container.appendChild(div);
+        });
+    }
+
+    function clearData() {
+        if(confirm("Clear all history and blacklist data?")) {
+            localStorage.clear();
+            location.reload();
+        }
+    }
+</script>
+
+<script src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&libraries=places&callback=initMap" async defer></script>
+
+</body>
+</html>

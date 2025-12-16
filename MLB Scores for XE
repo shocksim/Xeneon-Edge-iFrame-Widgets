@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MLB Live Score Widget (Settings)</title>
+    <style>
+        :root {
+            --bg-color: #1e1e1e;
+            --card-bg: #2a2a2a;
+            --text-main: #ffffff;
+            --text-sub: #b0b0b0;
+            --accent: #4ea8de; /* MLB Light Blue */
+            --modal-bg: rgba(0, 0, 0, 0.85);
+            --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            margin: 0; padding: 0; background-color: var(--bg-color); color: var(--text-main);
+            font-family: var(--font-family); overflow-x: hidden;
+            display: flex; flex-direction: column; min-height: 100vh;
+        }
+
+        /* --- Scrollbar --- */
+        html { scrollbar-width: thin; scrollbar-color: var(--card-bg) var(--bg-color); }
+        ::-webkit-scrollbar { width: 10px; }
+        ::-webkit-scrollbar-track { background: var(--bg-color); }
+        ::-webkit-scrollbar-thumb { background-color: var(--card-bg); border-radius: 10px; border: 2px solid var(--bg-color); }
+        ::-webkit-scrollbar-thumb:hover { background-color: #3d3d3d; }
+
+        #widget-container { padding: 16px; max-width: 100%; flex-grow: 1; padding-bottom: 40px; }
+
+        /* --- Header --- */
+        header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 16px; padding-bottom: 8px; border-bottom: 2px solid #444;
+        }
+
+        .header-left { display: flex; flex-direction: column; gap: 4px; }
+
+        h2 { margin: 0; font-size: 18px; text-transform: uppercase; letter-spacing: 1.2px; }
+
+        .live-indicator {
+            font-size: 11px; color: var(--accent); display: flex; align-items: center; gap: 6px; font-weight: 600;
+        }
+        
+        .dot {
+            height: 8px; width: 8px; background-color: var(--accent); border-radius: 50%;
+            display: inline-block; animation: pulse 2s infinite;
+        }
+
+        /* Attribution Header Styling */
+        .attribution-container {
+            margin-left: 8px;
+            padding-left: 8px;
+            border-left: 1px solid #444; /* Subtle divider */
+            display: flex;
+            align-items: center;
+            color: var(--text-sub);
+            font-weight: 400;
+            font-size: 10px;
+            opacity: 0.8;
+        }
+
+        .attribution-container a {
+            margin-left: 4px;
+            display: flex;
+        }
+
+        .attribution-logo {
+            height: 12px;
+            width: auto;
+            vertical-align: middle;
+            transition: opacity 0.2s;
+            display: block;
+        }
+        
+        .attribution-logo:hover {
+            opacity: 1;
+        }
+
+        /* --- Settings Button --- */
+        .settings-btn {
+            background: none; border: none; cursor: pointer; color: var(--text-sub);
+            padding: 8px; border-radius: 50%; transition: color 0.2s, background 0.2s;
+        }
+        .settings-btn:hover { color: var(--text-main); background: rgba(255,255,255,0.1); }
+        .settings-btn svg { width: 20px; height: 20px; display: block; }
+
+        /* --- Scoreboard --- */
+        #scoreboard {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px;
+        }
+
+        .game-card {
+            background-color: var(--card-bg); border-radius: 12px; padding: 16px;
+            display: flex; flex-direction: column; gap: 12px;
+            box-shadow: 0 6px 12px rgba(0,0,0,0.3); transition: transform 0.2s;
+            position: relative;
+            border: 1px solid transparent;
+        }
+        
+        /* Highlight Favorite Team Card */
+        .game-card.favorite-game {
+            border-color: var(--accent);
+            background: linear-gradient(145deg, var(--card-bg), #202835);
+        }
+        .fav-star {
+            position: absolute; top: 10px; left: 10px; color: var(--accent); font-size: 10px; font-weight: 700; letter-spacing: 0.5px;
+        }
+
+        .game-status { font-size: 14px; color: var(--text-sub); text-align: right; font-weight: 600; }
+        .team-row { display: flex; justify-content: space-between; align-items: center; }
+        .team-info { display: flex; align-items: center; gap: 12px; }
+        .team-logo { width: 42px; height: 42px; object-fit: contain; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5)); }
+        .team-name { font-weight: 700; font-size: 20px; letter-spacing: 0.5px; }
+        .score { font-size: 24px; font-weight: 800; font-variant-numeric: tabular-nums; }
+        .winner { color: var(--text-main); }
+        .loser { color: var(--text-sub); }
+        .message { text-align: center; padding: 30px; color: var(--text-sub); font-size: 16px; grid-column: 1 / -1; }
+
+        /* --- Settings Modal --- */
+        #settings-modal {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--modal-bg); z-index: 100;
+            justify-content: center; align-items: center;
+            backdrop-filter: blur(4px);
+        }
+
+        .modal-content {
+            background: var(--bg-color); padding: 24px; border-radius: 12px;
+            width: 300px; border: 1px solid #444;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            text-align: center;
+        }
+
+        .modal-title { margin-top: 0; font-size: 18px; margin-bottom: 20px; }
+        
+        select {
+            width: 100%; padding: 10px; margin-bottom: 20px;
+            background: var(--card-bg); color: #fff; border: 1px solid #555;
+            border-radius: 6px; font-size: 14px;
+        }
+
+        .modal-actions { display: flex; gap: 10px; justify-content: center; }
+        
+        button.primary {
+            background: var(--accent); color: #fff; border: none; padding: 8px 16px;
+            border-radius: 6px; font-weight: 700; cursor: pointer;
+        }
+        button.secondary {
+            background: transparent; color: var(--text-sub); border: 1px solid #555;
+            padding: 8px 16px; border-radius: 6px; cursor: pointer;
+        }
+        button:hover { opacity: 0.9; }
+
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
+    </style>
+</head>
+<body>
+
+<div id="widget-container">
+    <header>
+        <div class="header-left">
+            <h2>MLB Scores</h2>
+            <div class="live-indicator">
+                <span class="dot"></span> LIVE DATA
+                <div class="attribution-container">
+                    <span>Powered by</span>
+                    <a href="http://espn.go.com" target="_blank" title="Data provided by ESPN">
+                        <img src="https://a.espncdn.com/redesign/assets/img/logos/espn-404@2x.png" class="attribution-logo" alt="ESPN">
+                    </a>
+                </div>
+            </div>
+        </div>
+        <button class="settings-btn" onclick="openSettings()" title="Settings">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+        </button>
+    </header>
+    <div id="scoreboard">
+        <div class="message">Loading scores...</div>
+    </div>
+</div>
+
+<div id="settings-modal">
+    <div class="modal-content">
+        <h3 class="modal-title">Widget Settings</h3>
+        <div style="text-align: left; margin-bottom: 8px; font-size: 12px; color:#aaa;">Favorite Team (Pins to top)</div>
+        <select id="team-selector">
+            <option value="">-- None --</option>
+            <optgroup label="AL East">
+                <option value="BAL">Baltimore Orioles</option>
+                <option value="BOS">Boston Red Sox</option>
+                <option value="NYY">New York Yankees</option>
+                <option value="TB">Tampa Bay Rays</option>
+                <option value="TOR">Toronto Blue Jays</option>
+            </optgroup>
+            <optgroup label="AL Central">
+                <option value="CWS">Chicago White Sox</option>
+                <option value="CLE">Cleveland Guardians</option>
+                <option value="DET">Detroit Tigers</option>
+                <option value="KC">Kansas City Royals</option>
+                <option value="MIN">Minnesota Twins</option>
+            </optgroup>
+            <optgroup label="AL West">
+                <option value="HOU">Houston Astros</option>
+                <option value="LAA">Los Angeles Angels</option>
+                <option value="OAK">Oakland Athletics</option>
+                <option value="SEA">Seattle Mariners</option>
+                <option value="TEX">Texas Rangers</option>
+            </optgroup>
+            <optgroup label="NL East">
+                <option value="ATL">Atlanta Braves</option>
+                <option value="MIA">Miami Marlins</option>
+                <option value="NYM">New York Mets</option>
+                <option value="PHI">Philadelphia Phillies</option>
+                <option value="WSH">Washington Nationals</option>
+            </optgroup>
+            <optgroup label="NL Central">
+                <option value="CHC">Chicago Cubs</option>
+                <option value="CIN">Cincinnati Reds</option>
+                <option value="MIL">Milwaukee Brewers</option>
+                <option value="PIT">Pittsburgh Pirates</option>
+                <option value="STL">St. Louis Cardinals</option>
+            </optgroup>
+            <optgroup label="NL West">
+                <option value="ARI">Arizona Diamondbacks</option>
+                <option value="COL">Colorado Rockies</option>
+                <option value="LAD">Los Angeles Dodgers</option>
+                <option value="SD">San Diego Padres</option>
+                <option value="SF">San Francisco Giants</option>
+            </optgroup>
+        </select>
+        <div class="modal-actions">
+            <button class="secondary" onclick="closeSettings()">Cancel</button>
+            <button class="primary" onclick="saveSettings()">Save</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const API_URL = "https://site.api.espn.com/apis/site/v2/sports/baseball/mlb/scoreboard";
+    const REFRESH_RATE = 60000;
+    
+    // Config: Load from local storage
+    let favoriteTeam = localStorage.getItem('mlb_fav_team') || "";
+
+    // -- Settings Logic --
+    function openSettings() {
+        document.getElementById('team-selector').value = favoriteTeam;
+        document.getElementById('settings-modal').style.display = 'flex';
+    }
+
+    function closeSettings() {
+        document.getElementById('settings-modal').style.display = 'none';
+    }
+
+    function saveSettings() {
+        const selector = document.getElementById('team-selector');
+        favoriteTeam = selector.value;
+        localStorage.setItem('mlb_fav_team', favoriteTeam);
+        
+        closeSettings();
+        fetchScores(); // Refresh immediately to re-sort
+    }
+
+    // -- Scoreboard Logic --
+    async function fetchScores() {
+        try {
+            const response = await fetch(API_URL);
+            if (!response.ok) throw new Error('Network response was not ok');
+            const data = await response.json();
+            renderGames(data);
+        } catch (error) {
+            console.error("Error fetching MLB scores:", error);
+            document.getElementById('scoreboard').innerHTML = 
+                '<div class="message">Unable to load scores. <br> Check console for details.</div>';
+        }
+    }
+
+    function renderGames(data) {
+        const scoreboard = document.getElementById('scoreboard');
+        scoreboard.innerHTML = '';
+
+        const games = data.events;
+
+        if (!games || games.length === 0) {
+            scoreboard.innerHTML = '<div class="message">No games scheduled for today.</div>';
+            return;
+        }
+
+        // --- SORTING LOGIC ---
+        // If we have a favorite team, move that game to the front of the array
+        if (favoriteTeam) {
+            games.sort((a, b) => {
+                const aCompetitors = a.competitions[0].competitors;
+                const bCompetitors = b.competitions[0].competitors;
+                
+                const aHasFav = aCompetitors.some(c => c.team.abbreviation === favoriteTeam);
+                const bHasFav = bCompetitors.some(c => c.team.abbreviation === favoriteTeam);
+
+                if (aHasFav && !bHasFav) return -1; // a comes first
+                if (!aHasFav && bHasFav) return 1;  // b comes first
+                return 0; // maintain order
+            });
+        }
+        // ---------------------
+
+        games.forEach(game => {
+            const competition = game.competitions[0];
+            const status = game.status.type.shortDetail;
+            const isCompleted = game.status.type.completed;
+
+            const homeTeam = competition.competitors.find(c => c.homeAway === 'home');
+            const awayTeam = competition.competitors.find(c => c.homeAway === 'away');
+
+            const getLogo = (abbrev) => `https://a.espncdn.com/i/teamlogos/mlb/500/${abbrev}.png`;
+
+            // Check if this card contains the favorite team
+            const isFavGame = favoriteTeam && (homeTeam.team.abbreviation === favoriteTeam || awayTeam.team.abbreviation === favoriteTeam);
+
+            const card = document.createElement('div');
+            // Add special class if it's the favorite game
+            card.className = isFavGame ? 'game-card favorite-game' : 'game-card';
+            
+            card.innerHTML = `
+                ${isFavGame ? '<div class="fav-star">★ FAVORITE</div>' : ''}
+                <div class="game-status">${status}</div>
+                
+                <div class="team-row ${isCompleted && Number(awayTeam.score) < Number(homeTeam.score) ? 'loser' : 'winner'}">
+                    <div class="team-info">
+                        <img src="${getLogo(awayTeam.team.abbreviation)}" class="team-logo" alt="${awayTeam.team.abbreviation}" onerror="this.src='${awayTeam.team.logo}'">
+                        <span class="team-name">${awayTeam.team.abbreviation}</span>
+                    </div>
+                    <span class="score">${awayTeam.score}</span>
+                </div>
+
+                <div class="team-row ${isCompleted && Number(homeTeam.score) < Number(awayTeam.score) ? 'loser' : 'winner'}">
+                    <div class="team-info">
+                        <img src="${getLogo(homeTeam.team.abbreviation)}" class="team-logo" alt="${homeTeam.team.abbreviation}" onerror="this.src='${homeTeam.team.logo}'">
+                        <span class="team-name">${homeTeam.team.abbreviation}</span>
+                    </div>
+                    <span class="score">${homeTeam.score}</span>
+                </div>
+            `;
+
+            scoreboard.appendChild(card);
+        });
+    }
+
+    fetchScores();
+    setInterval(fetchScores, REFRESH_RATE);
+</script>
+
+</body>
+</html>

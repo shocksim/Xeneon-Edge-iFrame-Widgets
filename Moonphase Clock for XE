@@ -27,9 +27,9 @@
             border: 1px solid rgba(255, 255, 255, 0.1);
             
             /* SCALED VALUES */
-            border-radius: 36px;       /* was 24px */
-            padding: 3rem;             /* was 2rem */
-            width: 450px;              /* was 300px */
+            border-radius: 36px;       
+            padding: 3rem;             
+            width: 450px;              
             
             text-align: center;
             box-shadow: 0 12px 48px 0 rgba(0, 0, 0, 0.5);
@@ -37,21 +37,21 @@
 
         /* --- CLOCK STYLES (Scaled 1.5x) --- */
         .time {
-            font-size: 5.25rem;        /* was 3.5rem */
+            font-size: 5.25rem;        
             font-weight: 200;
-            letter-spacing: -3px;      /* Adjusted spacing */
+            letter-spacing: -3px;      
             line-height: 1;
-            margin-bottom: 0.75rem;    /* was 0.5rem */
+            margin-bottom: 0.75rem;    
             text-shadow: 0 3px 15px rgba(0,0,0,0.2);
         }
 
         .date {
-            font-size: 1.2rem;         /* was 0.8rem */
+            font-size: 1.2rem;         
             font-weight: 600;
             text-transform: uppercase;
-            letter-spacing: 2.25px;    /* was 1.5px */
+            letter-spacing: 2.25px;    
             color: rgba(255, 255, 255, 0.6);
-            margin-bottom: 3rem;       /* was 2rem */
+            margin-bottom: 3rem;       
         }
 
         /* --- MOON VISUALS (Scaled 1.5x) --- */
@@ -59,12 +59,12 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 18px;                 /* was 12px */
+            gap: 18px;                 
         }
 
         .moon-svg {
-            width: 120px;              /* was 80px */
-            height: 120px;             /* was 80px */
+            width: 120px;              
+            height: 120px;             
             filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.15));
         }
         
@@ -80,14 +80,14 @@
         }
 
         .moon-label {
-            font-size: 1.35rem;        /* was 0.9rem */
+            font-size: 1.35rem;        
             font-weight: 500;
-            letter-spacing: 0.75px;    /* was 0.5px */
+            letter-spacing: 0.75px;    
             color: #ffffff;
         }
         
         .illumination {
-            font-size: 1.1rem;         /* was 0.75rem */
+            font-size: 1.1rem;         
             color: rgba(255, 255, 255, 0.5);
             font-weight: 400;
         }
@@ -168,12 +168,29 @@
             document.getElementById('moon-illum').innerText = phaseData.illum + "% Illumination";
         }
 
+        // --- 3. EFFICIENT INITIALIZATION ---
         function init() {
+            // 1. Run immediately so the screen isn't empty
             updateClock();
             updateMoon();
-            setInterval(updateClock, 1000);
-            setInterval(updateMoon, 1000 * 60); 
+            
+            // 2. Sync with the system minute
+            const now = new Date();
+            const secondsUntilNextMinute = 60 - now.getSeconds();
+            
+            // Wait for the exact start of the next minute
+            setTimeout(() => {
+                updateClock(); // Update exactly on the minute
+                
+                // Now start the 60-second interval
+                setInterval(updateClock, 60000); 
+                
+            }, secondsUntilNextMinute * 1000);
+
+            // 3. Moon updates can stay hourly (very low cost)
+            setInterval(updateMoon, 1000 * 60 * 60); 
         }
+
         init();
     </script>
 </body>

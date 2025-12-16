@@ -13,42 +13,8 @@ The rest of them don't require any extra API keys.
 -----------------------------------------------------------------------
 
 
-NFL Scores
+![nfl xeneon edge widget](images/1.png)
 
-![nfl xeneon edge widget](images/nfl.png)
+![epl plus xeneon edge widget](images/2.png)
 
-
-Pro Football (Soccer) Scores
-
-![epl plus xeneon edge widget](images/futbol.png)
-
-
-Counter-Strike 2 eSports Tracker
-
-![CS2 Xeneon Edge Widget](images/cs2.png)
-
-
-Lunch Roulette
-
-![Lunch picker xeneon edge widget](images/lunch.png)
-
-
-NHL Scores
-
-![NHL score widget for xeneon edge](images/nhl.png)
-
-
-NBA Scores
-
-![nba scores xeneon edge widget](images/nba.png)
-
-
-
-Formula 1 Next Race Tracker
-
-![F1 next race xeneon edge widget](images/f1.png)
-
-
-DOTA2 Esports Tracker
-
-![dota2 xeneon edge widget](images/dota.png)
+![CS2 Xeneon Edge Widget](images/3.1.png)

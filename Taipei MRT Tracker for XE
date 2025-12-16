@@ -1,3 +1,13 @@
+<!-- How to get this working with Real Data:
+
+    Go to the TDX Member Center and sign up (it's free).
+
+    Get your Client ID and Client Secret.
+
+    Paste them into the new fields in your widget settings.
+
+    The widget will immediately switch from "Demo Mode" to "Live Mode." --> 
+
 <!DOCTYPE html>
 <html>
 <head>

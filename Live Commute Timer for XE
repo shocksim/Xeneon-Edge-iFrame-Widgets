@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Commute Timer v4 (Units Added)</title>
+    <title>Commute Timer v4.2 (Timestamp Added)</title>
     <style>
         /* --- CSS STYLES --- */
         :root {
@@ -11,8 +11,9 @@
             --text-main: #ffffff;
             --text-muted: #888;
             --accent: #3b82f6;
-            --danger: #ef4444;
-            --success: #22c55e;
+            --danger: #ef4444;     /* Red */
+            --success: #22c55e;    /* Green */
+            --fast: #06b6d4;       /* Teal/Cyan for "Faster Than Usual" */
         }
 
         body {
@@ -64,13 +65,12 @@
         .icon-btn:hover { color: #fff; }
 
         .time-display {
-            /* Reduced slightly to fit "mins" text */
             font-size: 3rem; 
             font-weight: 700;
             line-height: 1;
             margin: 10px 0;
             letter-spacing: -1px;
-            white-space: nowrap; /* Prevent wrapping */
+            white-space: nowrap; 
         }
 
         .status-pill {
@@ -82,8 +82,17 @@
             margin-top: 5px;
             background: rgba(255,255,255,0.1);
         }
+        
+        /* --- STATUS COLOR CLASSES --- */
         .status-good { color: var(--success); background: rgba(34, 197, 94, 0.15); }
         .status-delay { color: var(--danger); background: rgba(239, 68, 68, 0.15); }
+        .status-fast { color: var(--fast); background: rgba(6, 182, 212, 0.15); }
+
+        .footer-text {
+            margin-top: 15px; 
+            font-size: 0.7rem; 
+            color: #555;
+        }
 
         #settings-overlay {
             display: none;
@@ -125,7 +134,7 @@
     <div id="time" class="time-display">--</div>
     <div id="status" class="status-pill">Setup Required</div>
     
-    <div style="margin-top: 15px; font-size: 0.7rem; color: #555;">
+    <div id="footer-info" class="footer-text">
         Live Traffic Widget
     </div>
 
@@ -158,6 +167,7 @@
     const statusPill = document.getElementById('status');
     const routeLabel = document.getElementById('route-label');
     const settingsOverlay = document.getElementById('settings-overlay');
+    const footerInfo = document.getElementById('footer-info');
 
     function init() {
         apiKey = localStorage.getItem('commute_api_key') || '';
@@ -209,13 +219,14 @@
                 const durationTypical = element.duration.value; 
                 let cleanTime = element.duration_in_traffic.text;
 
-                // --- CHANGED SECTION ---
-                // Removed the code that deleted "mins". 
-                // We only shorten "hours" to "h" to save space.
                 cleanTime = cleanTime.replace(' hours', 'h').replace(' hour', 'h');
                 
                 timeDisplay.innerText = cleanTime;
-                // -----------------------
+
+                // --- Update Timestamp ---
+                const now = new Date();
+                const timeString = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                footerInfo.innerText = `Updated: ${timeString}`;
 
                 const delayMinutes = Math.round((durationTraffic - durationTypical) / 60);
 
@@ -223,8 +234,8 @@
                     statusPill.className = 'status-pill status-delay';
                     statusPill.innerText = `+${delayMinutes} min delay`;
                 } else if (delayMinutes <= -2) {
-                     statusPill.className = 'status-pill status-good';
-                     statusPill.innerText = 'Green Light';
+                     statusPill.className = 'status-pill status-fast';
+                     statusPill.innerText = 'Faster Than Usual';
                 } else {
                     statusPill.className = 'status-pill status-good';
                     statusPill.innerText = 'Traffic Normal';

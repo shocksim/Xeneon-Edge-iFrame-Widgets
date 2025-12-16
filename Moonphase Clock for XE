@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Precision Moon Phase Clock</title>
+    <style>
+        /* --- RESET & LAYOUT --- */
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #0d0d0d; 
+            color: #ffffff;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        /* --- WIDGET CONTAINER --- */
+        .widget-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            padding: 2rem;
+            width: 300px; 
+            text-align: center;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+        }
+
+        /* --- CLOCK STYLES --- */
+        .time {
+            font-size: 3.5rem;
+            font-weight: 200;
+            letter-spacing: -2px;
+            line-height: 1;
+            margin-bottom: 0.5rem;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+
+        .date {
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: rgba(255, 255, 255, 0.6);
+            margin-bottom: 2rem;
+        }
+
+        /* --- MOON VISUALS --- */
+        .moon-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .moon-svg {
+            width: 80px;
+            height: 80px;
+            filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.15));
+        }
+        
+        .moon-outline {
+            stroke: rgba(255, 255, 255, 0.2);
+            stroke-width: 1.5;
+            fill: transparent;
+        }
+
+        .moon-fill {
+            fill: #ffffff;
+            transition: d 0.5s ease; /* Smooth transition if phase changes */
+        }
+
+        .moon-label {
+            font-size: 0.9rem;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+            color: #ffffff;
+        }
+        
+        .illumination {
+            font-size: 0.75rem;
+            color: rgba(255, 255, 255, 0.5);
+            font-weight: 400;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="widget-card">
+        <div class="time" id="clock">00:00</div>
+        <div class="date" id="date">LOADING...</div>
+
+        <div class="moon-container">
+            <svg class="moon-svg" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+                <circle class="moon-outline" cx="32" cy="32" r="30"/>
+                <path class="moon-fill" id="moon-path" d=""/> 
+            </svg>
+            
+            <div class="moon-label" id="moon-phase">--</div>
+            <div class="illumination" id="moon-illum">--% Illumination</div>
+        </div>
+    </div>
+
+    <script>
+        // --- 1. CLOCK LOGIC ---
+        function updateClock() {
+            const now = new Date();
+            document.getElementById('clock').innerText = now.toLocaleTimeString('en-US', { 
+                hour12: false, hour: '2-digit', minute: '2-digit' 
+            });
+            document.getElementById('date').innerText = now.toLocaleDateString('en-US', { 
+                weekday: 'long', month: 'short', day: 'numeric' 
+            });
+        }
+
+        // --- 2. PRECISE MOON LOGIC ---
+        
+        // SVG Paths for the 8 distinct appearances
+        const moonPaths = {
+            new: "", 
+            waxCre: "M32,2 A30,30 0 0,1 32,62 A22,30 0 0,0 32,2",
+            firstQ: "M32,2 A30,30 0 0,1 32,62 L32,2Z",
+            waxGib: "M32,2 A30,30 0 0,1 32,62 A38,30 0 0,1 32,2",
+            full: "M32,2 A30,30 0 1,1 32,62 A30,30 0 1,1 32,2",
+            wanGib: "M32,2 A38,30 0 0,0 32,62 A30,30 0 0,1 32,2",
+            lastQ: "M32,2 A30,30 0 0,0 32,62 L32,2Z",
+            wanCre: "M32,2 A22,30 0 0,1 32,62 A30,30 0 0,0 32,2"
+        };
+
+        function getMoonPhase(date) {
+            const synodicMonth = 29.53058867;
+            const refDate = new Date('2000-01-06T18:14:00'); // Known New Moon
+            const diffTime = date.getTime() - refDate.getTime();
+            const diffDays = diffTime / (1000 * 60 * 60 * 24);
+            
+            // Phase is 0.0 to 1.0
+            let phase = (diffDays % synodicMonth) / synodicMonth;
+            if (phase < 0) phase += 1;
+
+            let phaseName = "";
+            let pathData = "";
+
+            // Precise Ranges (Quarters & Full/New are small windows)
+            // 0.00 is New, 0.50 is Full. 
+            // We give "Full Moon" a 5% window (approx 1.5 days) to appear, otherwise it's Gibbous.
+            
+            if (phase < 0.025 || phase > 0.975) {
+                phaseName = "New Moon";
+                pathData = moonPaths.new;
+            } 
+            else if (phase < 0.225) {
+                phaseName = "Waxing Crescent";
+                pathData = moonPaths.waxCre;
+            } 
+            else if (phase < 0.275) { // Around 0.25
+                phaseName = "First Quarter";
+                pathData = moonPaths.firstQ;
+            } 
+            else if (phase < 0.475) {
+                phaseName = "Waxing Gibbous";
+                pathData = moonPaths.waxGib;
+            } 
+            else if (phase < 0.525) { // Around 0.50
+                phaseName = "Full Moon";
+                pathData = moonPaths.full;
+            } 
+            else if (phase < 0.725) {
+                phaseName = "Waning Gibbous";
+                pathData = moonPaths.wanGib;
+            } 
+            else if (phase < 0.775) { // Around 0.75
+                phaseName = "Last Quarter";
+                pathData = moonPaths.lastQ;
+            } 
+            else {
+                phaseName = "Waning Crescent";
+                pathData = moonPaths.wanCre;
+            }
+
+            // Calculate illumination
+            let illumination = Math.abs(phase - 0.5) * 2; 
+            illumination = (1 - illumination) * 100;
+
+            return { name: phaseName, path: pathData, illum: Math.round(illumination) };
+        }
+
+        function updateMoon() {
+            const now = new Date();
+            const phaseData = getMoonPhase(now);
+            
+            document.getElementById('moon-path').setAttribute('d', phaseData.path);
+            document.getElementById('moon-phase').innerText = phaseData.name;
+            document.getElementById('moon-illum').innerText = phaseData.illum + "% Illumination";
+        }
+
+        // --- 3. INIT ---
+        function init() {
+            updateClock();
+            updateMoon();
+            setInterval(updateClock, 1000);
+            setInterval(updateMoon, 1000 * 60); 
+        }
+
+        init();
+    </script>
+</body>
+</html>

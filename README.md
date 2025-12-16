@@ -1,14 +1,14 @@
-I'm shocksim, one of the people in working on the Xeneon Edge project at Corsair. I was bored one day and decided to make some example iframe widgets and share them.
+I'm shocksim, one of the creators of the Xeneon Edge LCD display at Corsair. I was bored one day and decided to make some example iframe widgets and share them.
 
-These are formatted iframe HTML widgets that you can copy and paste into the "code" form in the IFRAME widget in iCUE. These then use HTML/JS/CSS to draw a webpage and dynamically pull whatever data from a web api somewhere. If there are no public APIs, there'll be a note in the code to tell you how to go sign up for your own personal/free api. 
+These are formatted iframe widgets that you can copy and paste into the "code" form in the IFRAME widget in iCUE. These then use HTML/JS/CSS to draw a webpage and dynamically pull whatever data from a web api somewhere. If there are no public APIs, there'll be a note in the code to tell you how to go sign up for an account to get your own free api key. These APIs are usually free for personal use but costs money to call APIs at scale so they require an account. 
 
-Feel free to take the code and fork it, play around with modifying it and using the widgets. Happy Holidays!
+Feel free to take the code, fork it, play around with modifying it and using the widgets. Happy Holidays!
 
-For CS2: Sign up for a Pandascore account for their free API. 
+For CS2: Sign up for a Pandascore account for their free API and you could create widgets for other games they service. 
 
 For Lunch Roulette: Sign up for a free Google Cloud account to tap into Maps/Places APIs.
 
-The rest of them don't require any extra API keys.
+The rest of them shouldn't require any extra API keys.
 
 -----------------------------------------------------------------------
 

@@ -1,16 +1,14 @@
 <!DOCTYPE html><html>
 <head>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <title>Radar Widget v2.3 (Metric)</title>
+    <title>Radar Widget v3.1 (Robust)</title>
     
     <style>
         :root {
             --glass-bg: rgba(10, 15, 20, 0.85);
             --glass-border: rgba(255, 255, 255, 0.1);
-            --accent-radar: #00ff9d; /* Matrix Green */
-            --accent-plane: #ffffff;
-            --text-main: #ffffff;
-            --text-dim: #888;
+            --accent-radar: #00ff9d;
+            --accent-error: #ff4444;
             --font-ui: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
         }
 
@@ -35,8 +33,7 @@
         }
 
         .radar-header {
-            min-height: 70px;
-            padding: 0 25px; 
+            min-height: 70px; padding: 0 25px; 
             display: flex; justify-content: space-between; align-items: center;
             z-index: 1000; border-bottom: 1px solid rgba(255,255,255,0.08);
             background: rgba(0,0,0,0.2);
@@ -47,11 +44,9 @@
             letter-spacing: 2px; text-transform: uppercase; display: flex; align-items: center; gap: 10px;
         }
 
-        .status-dot {
-            width: 8px; height: 8px; background: var(--accent-radar);
-            border-radius: 50%; box-shadow: 0 0 8px var(--accent-radar);
-            animation: blink 2s infinite;
-        }
+        /* Dynamic Status Colors */
+        .status-dot { width: 8px; height: 8px; background: var(--accent-radar); border-radius: 50%; box-shadow: 0 0 8px var(--accent-radar); animation: blink 2s infinite; }
+        .status-dot.error { background: var(--accent-error); box-shadow: 0 0 8px var(--accent-error); }
 
         .location-input {
             background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
@@ -62,7 +57,6 @@
 
         #map { flex-grow: 1; width: 100%; background: #111; z-index: 1; }
 
-        /* --- Stats Panel --- */
         .flight-stats {
             position: absolute; bottom: 25px; left: 25px; width: 280px;
             background: rgba(0, 0, 0, 0.9);
@@ -73,7 +67,6 @@
         }
         
         .tracking-label { font-size: 0.65rem; color: var(--accent-radar); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 2px; font-weight: 700; opacity: 0.9;}
-        
         .callsign-large { font-size: 2.2rem; font-weight: 800; line-height: 1; color: white; letter-spacing: -1px; }
         .airline-name { font-size: 1rem; color: #bbb; margin-bottom: 15px; font-weight: 400; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
@@ -94,8 +87,9 @@
 
         .api-warning { font-size: 0.6rem; color: #555; text-align: center; margin-top: 10px; font-style: italic;}
 
-        /* Map Elements */
-        .plane-icon { transition: all 1s linear; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.8)); }
+        /* Markers */
+        .leaflet-marker-icon, .plane-icon { transition: transform 1s linear, top 1s linear, left 1s linear; }
+        .plane-svg { transition: transform 0.5s ease; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.8)); }
         .plane-icon.closest-target path { fill: var(--accent-radar) !important; filter: drop-shadow(0 0 10px var(--accent-radar)); }
         
         .radar-pulse { border: 1px solid var(--accent-radar); border-radius: 50%; animation: expand 4s infinite; box-sizing: border-box; }
@@ -108,9 +102,9 @@
 
     <div class="radar-widget">
         <div class="radar-header">
-            <div class="title">
-                <div class="status-dot"></div>
-                LIVE TRAFFIC
+            <div class="title" id="statusTitle">
+                <div class="status-dot" id="statusDot"></div>
+                <span id="statusText">LIVE TRAFFIC</span>
             </div>
             <input type="text" class="location-input" id="searchBox" placeholder="Search City..." onkeydown="handleSearch(event)">
         </div>
@@ -120,7 +114,7 @@
         <div class="flight-stats" id="flightPanel">
             <div class="tracking-label">Tracking Nearest Flight</div>
             <div class="callsign-large" id="f-callsign">SCANNING</div>
-            <div class="airline-name" id="f-airline">Waiting for traffic...</div>
+            <div class="airline-name" id="f-airline">Initializing Radar...</div>
             
             <div class="stat-grid">
                 <div class="stat-box">
@@ -176,12 +170,13 @@
             "FIN": "Finnair", "EZY": "EasyJet", "RYR": "Ryanair", "THY": "Turkish Airlines",
             "AIC": "Air India", "CSN": "China Southern", "CCA": "Air China", "CES": "China Eastern",
             "KOREAN": "Korean Air", "KAL": "Korean Air", "EVA": "EVA Air", "CAL": "China Airlines",
-            "UPS": "UPS Airlines", "FDX": "FedEx", "GTI": "Atlas Air", "LXJ": "Flexjet", "EJA": "NetJets"
+            "UPS": "UPS Airlines", "FDX": "FedEx", "GTI": "Atlas Air"
         };
 
         let map, planesLayer, radarCircle;
         let currentLat = 37.7749, currentLng = -122.4194; // Default: SF
         let currentlyLockedCallsign = null; 
+        let planeRegistry = {}; 
 
         function initMap() {
             map = L.map('map', { zoomControl: false, attributionControl: false }).setView([currentLat, currentLng], 10);
@@ -192,7 +187,7 @@
             planesLayer = L.layerGroup().addTo(map);
             updateHomeMarker();
             fetchPlanes(); 
-            setInterval(fetchPlanes, 8000); 
+            setInterval(fetchPlanes, 10000); 
         }
 
         function updateHomeMarker() {
@@ -202,16 +197,40 @@
             }).addTo(map);
         }
 
+        function setStatus(isError, text) {
+            const dot = document.getElementById('statusDot');
+            const txt = document.getElementById('statusText');
+            
+            if(isError) {
+                dot.classList.add('error');
+                txt.style.color = '#ff4444';
+                txt.innerText = text;
+            } else {
+                dot.classList.remove('error');
+                txt.style.color = '#00ff9d';
+                txt.innerText = text;
+            }
+        }
+
         async function fetchPlanes() {
-            const box = 0.5; 
+            // WIDENED SEARCH BOX (0.5 -> 0.8) to ensure we find planes
+            const box = 0.8; 
+            
             try {
                 const response = await fetch(`${OPENSKY_API}?lamin=${currentLat-box}&lomin=${currentLng-box}&lamax=${currentLat+box}&lomax=${currentLng+box}`);
-                const data = await response.json();
                 
-                planesLayer.clearLayers();
+                if (!response.ok) {
+                    throw new Error("API Rate Limit");
+                }
+
+                const data = await response.json();
+                setStatus(false, "LIVE TRAFFIC");
+
+                const activeIcaos = new Set();
                 let closest = null, minDst = Infinity;
 
-                if (data.states) {
+                // OpenSky returns null 'states' if no planes are found
+                if (data && data.states) {
                     data.states.forEach(s => {
                         const [icao, callsignRaw, country, , , lon, lat, alt, onG, vel, head] = s;
                         const callsign = callsignRaw.trim();
@@ -220,52 +239,88 @@
                             const pLoc = L.latLng(lat, lon);
                             const dst = map.distance(L.latLng(currentLat, currentLng), pLoc);
                             
-                            if (dst < minDst) { minDst = dst; closest = { callsign, country, alt, vel, head, lat, lon, dst }; }
+                            const planeData = { icao, callsign, country, alt, vel, head, lat, lon, dst };
                             
-                            addPlaneMarker(lat, lon, head, false);
+                            if (dst < minDst) { minDst = dst; closest = planeData; }
+                            
+                            updateOrAddPlane(planeData);
+                            activeIcaos.add(icao);
                         }
                     });
+                } else {
+                    // Valid response but empty sky
+                    document.getElementById('f-callsign').innerText = "NO TRAFFIC";
+                    document.getElementById('f-airline').innerText = "Sky is clear nearby";
                 }
+
+                // Clean up old planes only if API call was successful
+                Object.keys(planeRegistry).forEach(icao => {
+                    if (!activeIcaos.has(icao)) {
+                        planesLayer.removeLayer(planeRegistry[icao]);
+                        delete planeRegistry[icao];
+                    }
+                });
 
                 if (closest) {
                     updateStatsPanel(closest);
-                    addPlaneMarker(closest.lat, closest.lon, closest.head, true);
-                } else {
-                    document.getElementById('f-callsign').innerText = "SCANNING";
-                    document.getElementById('f-airline').innerText = "Searching for signals...";
+                    highlightClosest(closest.icao);
                 }
-            } catch (e) { console.error("Radar sweep failed", e); }
+
+            } catch (e) { 
+                console.error(e);
+                setStatus(true, "API LIMIT / RETRYING");
+                // Do not delete planes if API fails, just keep them frozen until next success
+            }
         }
 
-        function addPlaneMarker(lat, lon, hdg, isClosest) {
+        function updateOrAddPlane(p) {
             const html = `
-                <svg viewBox="0 0 24 24" fill="${isClosest ? '#00ff9d' : '#fff'}" style="transform: rotate(${hdg-45}deg); filter: drop-shadow(0 0 3px rgba(0,0,0,0.5));">
+                <svg class="plane-svg" viewBox="0 0 24 24" fill="#fff" style="transform: rotate(${p.head-45}deg); width: 100%; height: 100%;">
                     <path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/>
                 </svg>`;
-            L.marker([lat, lon], { 
-                icon: L.divIcon({ className: `plane-icon ${isClosest?'closest-target':''}`, html, iconSize: [30,30], iconAnchor: [15,15] }), 
-                zIndexOffset: isClosest ? 1000 : 0 
-            }).addTo(planesLayer);
+
+            if (planeRegistry[p.icao]) {
+                const marker = planeRegistry[p.icao];
+                marker.setLatLng([p.lat, p.lon]);
+                const iconEl = marker.getElement();
+                if(iconEl) {
+                    const svg = iconEl.querySelector('svg');
+                    if(svg) svg.style.transform = `rotate(${p.head-45}deg)`;
+                }
+            } else {
+                const icon = L.divIcon({ className: 'plane-icon', html: html, iconSize: [30,30], iconAnchor: [15,15] });
+                const marker = L.marker([p.lat, p.lon], { icon: icon }).addTo(planesLayer);
+                planeRegistry[p.icao] = marker;
+            }
+        }
+
+        function highlightClosest(targetIcao) {
+            Object.keys(planeRegistry).forEach(icao => {
+                const marker = planeRegistry[icao];
+                const iconEl = marker.getElement();
+                if (!iconEl) return;
+
+                if (icao === targetIcao) {
+                    marker.setZIndexOffset(1000);
+                    iconEl.classList.add('closest-target');
+                    iconEl.querySelector('path').style.fill = '#00ff9d';
+                } else {
+                    marker.setZIndexOffset(0);
+                    iconEl.classList.remove('closest-target');
+                    iconEl.querySelector('path').style.fill = '#ffffff';
+                }
+            });
         }
 
         function updateStatsPanel(data) {
-            // METRIC CONVERSIONS
-            // Altitude is already in meters in the API
             const alt = Math.round(data.alt || 0).toLocaleString();
-            
-            // Speed (m/s to km/h) = val * 3.6
             const spd = Math.round((data.vel || 0) * 3.6);
-            
-            // Distance (meters to km)
             const dst = (data.dst / 1000).toFixed(1);
 
             document.getElementById('f-callsign').innerText = data.callsign || "N/A";
-            
-            // Updated Units to Metric
             document.getElementById('f-alt').innerHTML = `${alt}<span class="unit-suffix">m</span>`;
             document.getElementById('f-speed').innerHTML = `${spd}<span class="unit-suffix">km/h</span>`;
             document.getElementById('f-dist').innerHTML = `${dst}<span class="unit-suffix">km</span>`;
-            
             document.getElementById('f-country').innerText = "CIVIL"; 
 
             const prefix = data.callsign.substring(0, 3).toUpperCase();

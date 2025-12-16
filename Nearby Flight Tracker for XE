@@ -1,7 +1,7 @@
 <!DOCTYPE html><html>
 <head>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <title>Radar Widget v2.1</title>
+    <title>Radar Widget v2.3 (Metric)</title>
     
     <style>
         :root {
@@ -16,7 +16,6 @@
 
         body {
             margin: 0; background-color: #000; font-family: var(--font-ui);
-            /* Changed overflow to auto to allow scrolling on small screens if needed */
             overflow: auto; 
             display: flex; justify-content: center; align-items: center; 
             min-height: 100vh;
@@ -26,10 +25,8 @@
 
         .radar-widget {
             position: relative; 
-            /* FIXED: Uses 'min' to ensure it never exceeds screen size */
             width: min(900px, 95vw); 
             height: min(650px, 90vh);
-            
             background: var(--glass-bg);
             backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
             border: 1px solid var(--glass-border); border-radius: 24px;
@@ -38,7 +35,6 @@
         }
 
         .radar-header {
-            /* Added min-height to prevent crushing */
             min-height: 70px;
             padding: 0 25px; 
             display: flex; justify-content: space-between; align-items: center;
@@ -76,7 +72,6 @@
             border-radius: 12px; padding: 20px; color: white; z-index: 1000;
         }
         
-        /* UPDATED TEXT STYLE */
         .tracking-label { font-size: 0.65rem; color: var(--accent-radar); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 2px; font-weight: 700; opacity: 0.9;}
         
         .callsign-large { font-size: 2.2rem; font-weight: 800; line-height: 1; color: white; letter-spacing: -1px; }
@@ -85,7 +80,9 @@
         .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 15px; }
         .stat-box { background: rgba(255,255,255,0.06); padding: 8px 10px; border-radius: 6px; }
         .stat-label { color: #666; text-transform: uppercase; font-size: 0.6rem; font-weight: 700; letter-spacing: 0.5px; }
+        
         .stat-val { font-weight: 600; font-family: 'Consolas', monospace; font-size: 1rem; color: #fff; margin-top: 2px; }
+        .unit-suffix { font-size: 0.7rem; color: #888; margin-left: 3px; font-weight: 400; }
 
         .route-info { 
             border-top: 1px solid rgba(255,255,255,0.1); padding-top: 12px; 
@@ -163,8 +160,6 @@
 
     <script>
         // --- CONFIGURATION ---
-        // 1. Get a free key from https://flightaware.com/commercial/aeroapi/
-        // 2. Paste it below. 
         const FLIGHTAWARE_API_KEY = ""; 
         // ---------------------
 
@@ -254,14 +249,23 @@
         }
 
         function updateStatsPanel(data) {
-            const alt = Math.round((data.alt || 0) * 3.28084).toLocaleString();
-            const spd = Math.round((data.vel || 0) * 1.94384);
-            const dst = (data.dst * 0.000621371).toFixed(1);
+            // METRIC CONVERSIONS
+            // Altitude is already in meters in the API
+            const alt = Math.round(data.alt || 0).toLocaleString();
+            
+            // Speed (m/s to km/h) = val * 3.6
+            const spd = Math.round((data.vel || 0) * 3.6);
+            
+            // Distance (meters to km)
+            const dst = (data.dst / 1000).toFixed(1);
 
             document.getElementById('f-callsign').innerText = data.callsign || "N/A";
-            document.getElementById('f-alt').innerText = alt;
-            document.getElementById('f-speed').innerText = spd;
-            document.getElementById('f-dist').innerText = dst;
+            
+            // Updated Units to Metric
+            document.getElementById('f-alt').innerHTML = `${alt}<span class="unit-suffix">m</span>`;
+            document.getElementById('f-speed').innerHTML = `${spd}<span class="unit-suffix">km/h</span>`;
+            document.getElementById('f-dist').innerHTML = `${dst}<span class="unit-suffix">km</span>`;
+            
             document.getElementById('f-country').innerText = "CIVIL"; 
 
             const prefix = data.callsign.substring(0, 3).toUpperCase();

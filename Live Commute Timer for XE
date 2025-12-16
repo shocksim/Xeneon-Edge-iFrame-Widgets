@@ -1,8 +1,7 @@
-<!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html><html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Commute Timer v5.1 (Resource Optimized)</title>
+    <title>Commute Timer v5.2 (Resource Optimized)</title>
     <style>
         /* --- CSS STYLES --- */
         :root {
@@ -372,7 +371,8 @@
 
                 // Clean Text
                 cleanTime = cleanTime.replace(' hours', 'h').replace(' hour', 'h');
-                cleanTime = cleanTime.replace(' mins', 'm').replace(' min', 'm');
+                // FIX: Force singular first, then pluralize to avoid "minss"
+                cleanTime = cleanTime.replace(' mins', ' min').replace(' min', ' mins');
                 timeDisplay.innerText = cleanTime;
 
                 // Update Timestamp

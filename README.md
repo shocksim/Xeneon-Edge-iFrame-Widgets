@@ -18,3 +18,5 @@ The rest of them shouldn't require any extra API keys.
 ![epl plus xeneon edge widget](images/2.png)
 
 ![CS2 Xeneon Edge Widget](images/3.1.png)
+
+![CS2 Xeneon Edge Widget](images/4.png)

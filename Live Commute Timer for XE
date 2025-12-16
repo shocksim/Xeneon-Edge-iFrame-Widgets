@@ -2,22 +2,24 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Commute Timer v4.2 (Timestamp Added)</title>
+    <title>Commute Timer v5.1 (Resource Optimized)</title>
     <style>
         /* --- CSS STYLES --- */
         :root {
-            --bg-color: #000000;
-            --card-bg: #1a1a1a;
             --text-main: #ffffff;
-            --text-muted: #888;
+            --text-muted: #bbb;
             --accent: #3b82f6;
-            --danger: #ef4444;     /* Red */
-            --success: #22c55e;    /* Green */
-            --fast: #06b6d4;       /* Teal/Cyan for "Faster Than Usual" */
+            --danger: #ef4444;     
+            --success: #22c55e;    
+            --fast: #06b6d4;       
+            
+            /* Dynamic Variables */
+            --glass-blur: 15px;
+            --bg-brightness: 100%;
         }
 
         body {
-            background-color: var(--bg-color);
+            background-color: #000;
             color: var(--text-main);
             font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             display: flex;
@@ -26,17 +28,39 @@
             height: 100vh;
             margin: 0;
             overflow: hidden;
+            position: relative;
         }
 
+        /* --- BACKGROUND LAYER --- */
+        #bg-layer {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: 0;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            filter: brightness(var(--bg-brightness));
+            transition: filter 0.2s ease;
+        }
+
+        /* --- WIDGET CONTAINER --- */
         .widget-container {
             position: relative;
+            z-index: 2;
             text-align: center;
-            background: var(--card-bg);
+            
+            /* Glass Effect */
+            background: rgba(30, 30, 30, 0.4); 
+            backdrop-filter: blur(var(--glass-blur));
+            -webkit-backdrop-filter: blur(var(--glass-blur));
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+            
             padding: 25px;
-            border-radius: 16px;
-            width: 300px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
-            border: 1px solid #333;
+            border-radius: 24px;
+            width: 320px;
+            transition: backdrop-filter 0.2s ease;
         }
 
         .header-row {
@@ -52,25 +76,31 @@
             text-transform: uppercase;
             letter-spacing: 1px;
             color: var(--text-muted);
+            text-shadow: 0 1px 2px rgba(0,0,0,0.8);
         }
 
         .icon-btn {
-            background: none;
-            border: none;
-            color: #666;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 50%;
+            width: 32px; height: 32px;
+            color: #ddd;
             cursor: pointer;
-            font-size: 1.2rem;
+            font-size: 1rem;
             padding: 0;
+            display: flex; align-items: center; justify-content: center;
+            transition: background 0.2s;
         }
-        .icon-btn:hover { color: #fff; }
+        .icon-btn:hover { background: rgba(255,255,255,0.3); color: #fff; }
 
         .time-display {
-            font-size: 3rem; 
+            font-size: 3.5rem; 
             font-weight: 700;
             line-height: 1;
-            margin: 10px 0;
-            letter-spacing: -1px;
+            margin: 15px 0;
+            letter-spacing: -2px;
             white-space: nowrap; 
+            text-shadow: 0 4px 10px rgba(0,0,0,0.3);
         }
 
         .status-pill {
@@ -81,52 +111,94 @@
             font-weight: 600;
             margin-top: 5px;
             background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255,255,255,0.05);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
         }
         
-        /* --- STATUS COLOR CLASSES --- */
-        .status-good { color: var(--success); background: rgba(34, 197, 94, 0.15); }
-        .status-delay { color: var(--danger); background: rgba(239, 68, 68, 0.15); }
-        .status-fast { color: var(--fast); background: rgba(6, 182, 212, 0.15); }
+        /* Status Colors */
+        .status-good { color: #86efac; background: rgba(34, 197, 94, 0.25); }
+        .status-delay { color: #fca5a5; background: rgba(239, 68, 68, 0.25); }
+        .status-fast { color: #67e8f9; background: rgba(6, 182, 212, 0.25); }
 
         .footer-text {
-            margin-top: 15px; 
-            font-size: 0.7rem; 
-            color: #555;
+            margin-top: 20px; 
+            font-size: 0.75rem; 
+            color: rgba(255,255,255,0.6);
+            font-weight: 500;
         }
 
+        /* --- SETTINGS OVERLAY --- */
         #settings-overlay {
             display: none;
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.95);
+            background: rgba(10, 10, 10, 0.95);
             z-index: 10;
-            border-radius: 16px;
+            border-radius: 24px;
             flex-direction: column;
-            justify-content: center;
+            justify-content: flex-start;
             padding: 20px;
             box-sizing: border-box;
+            overflow-y: auto;
+            text-align: left;
+        }
+        
+        #settings-overlay::-webkit-scrollbar { width: 4px; }
+        #settings-overlay::-webkit-scrollbar-thumb { background: #444; border-radius: 2px; }
+
+        .settings-title {
+            font-size: 0.9rem; font-weight: bold; color: var(--accent);
+            margin: 15px 0 10px 0; text-transform: uppercase; letter-spacing: 1px;
+            border-bottom: 1px solid #333; padding-bottom: 5px;
         }
 
-        .input-group { margin-bottom: 12px; text-align: left; }
+        .input-group { margin-bottom: 12px; }
         .input-group label {
-            display: block; font-size: 0.75rem; color: var(--text-muted); margin-bottom: 4px;
+            display: block; font-size: 0.75rem; color: #aaa; margin-bottom: 4px;
         }
-        .input-group input {
-            width: 100%; background: #333; border: 1px solid #444; color: #fff; padding: 8px; border-radius: 6px; box-sizing: border-box;
+        .input-group input[type="text"], 
+        .input-group input[type="password"],
+        .input-group select {
+            width: 100%; background: #222; border: 1px solid #444; color: #fff; 
+            padding: 8px; border-radius: 6px; box-sizing: border-box;
         }
+        
+        /* Select Dropdown Styling */
+        .input-group select { cursor: pointer; appearance: none; }
+
+        input[type=range] { width: 100%; accent-color: var(--accent); }
+        
+        .file-upload-label {
+            display: block; width: 100%; padding: 8px; background: #222; 
+            border: 1px dashed #555; text-align: center; font-size: 0.8rem; 
+            color: #aaa; cursor: pointer; border-radius: 6px;
+        }
+        .file-upload-label:hover { background: #333; color: white; }
+        input[type="file"] { display: none; }
+
         .save-btn {
-            width: 100%; background: var(--accent); border: none; color: white; padding: 10px; border-radius: 6px; cursor: pointer; margin-top: 10px; font-weight: bold;
+            width: 100%; background: var(--accent); border: none; color: white; 
+            padding: 12px; border-radius: 8px; cursor: pointer; margin-top: 20px; 
+            font-weight: bold; transition: background 0.2s;
         }
+        .save-btn:hover { background: #2563eb; }
+        
         .close-btn {
-            margin-top: 10px; background: transparent; color: #888; border: none; cursor: pointer; width: 100%;
+            margin-top: 10px; background: transparent; color: #888; 
+            border: none; cursor: pointer; width: 100%; padding: 8px;
         }
+        .close-btn:hover { color: #fff; }
+
     </style>
 </head>
 <body>
 
+<div id="bg-layer"></div>
+
 <div class="widget-container">
     <div class="header-row">
-        <button class="icon-btn" onclick="toggleDirection()" title="Swap">⇄</button>
+        <button class="icon-btn" onclick="toggleDirection()" title="Swap Route">⇄</button>
         <div id="route-label" class="route-label">HOME ➡ WORK</div>
         <button class="icon-btn" onclick="openSettings()" title="Settings">⚙️</button>
     </div>
@@ -139,53 +211,134 @@
     </div>
 
     <div id="settings-overlay">
+        <h3 style="margin-top:0">Settings</h3>
+
+        <div class="settings-title">Data</div>
         <div class="input-group">
             <label>Google API Key</label>
             <input type="password" id="input-api-key" placeholder="Paste Key Here">
         </div>
         <div class="input-group">
             <label>Home Address</label>
-            <input type="text" id="input-home" placeholder="e.g. 123 Main St, City">
+            <input type="text" id="input-home" placeholder="e.g. 123 Main St">
         </div>
         <div class="input-group">
             <label>Work Address</label>
             <input type="text" id="input-work" placeholder="e.g. 500 Enterprise Way">
         </div>
-        <button class="save-btn" onclick="saveSettings()">SAVE & REFRESH</button>
+        
+        <div class="input-group">
+            <label>Update Frequency (Save Resources)</label>
+            <select id="input-refresh">
+                <option value="300000">Every 5 Mins (High)</option>
+                <option value="600000">Every 10 Mins (Standard)</option>
+                <option value="900000">Every 15 Mins (Efficient)</option>
+                <option value="1800000">Every 30 Mins (Eco)</option>
+                <option value="3600000">Every 60 Mins (Max Eco)</option>
+            </select>
+        </div>
+
+        <div class="settings-title">Appearance</div>
+        
+        <div class="input-group">
+            <label>Background Image</label>
+            <label for="bg-upload" class="file-upload-label">Click to Upload Image...</label>
+            <input type="file" id="bg-upload" accept="image/*">
+        </div>
+
+        <div class="input-group">
+            <label>Glass Blur: <span id="blur-val">15px</span></label>
+            <input type="range" id="input-blur" min="0" max="40" value="15">
+        </div>
+
+        <div class="input-group">
+            <label>BG Brightness: <span id="bright-val">100%</span></label>
+            <input type="range" id="input-brightness" min="10" max="150" value="100">
+        </div>
+
+        <button class="save-btn" onclick="saveSettings()">SAVE & RESTART</button>
         <button class="close-btn" onclick="closeSettings()">Cancel</button>
     </div>
 </div>
 
 <script>
+    // --- STATE ---
     let apiKey = '';
     let homeAddr = '';
     let workAddr = '';
     let isHomeToWork = true;
-    const REFRESH_RATE = 600000; // 10 minutes
+    let refreshRate = 600000; // Default 10 min
+    let refreshTimer = null;  // Stores the ID of the interval
 
+    // --- ELEMENTS ---
     const timeDisplay = document.getElementById('time');
     const statusPill = document.getElementById('status');
     const routeLabel = document.getElementById('route-label');
     const settingsOverlay = document.getElementById('settings-overlay');
     const footerInfo = document.getElementById('footer-info');
+    const bgLayer = document.getElementById('bg-layer');
 
+    // Inputs
+    const inputApiKey = document.getElementById('input-api-key');
+    const inputHome = document.getElementById('input-home');
+    const inputWork = document.getElementById('input-work');
+    const inputRefresh = document.getElementById('input-refresh');
+    const inputBlur = document.getElementById('input-blur');
+    const inputBright = document.getElementById('input-brightness');
+    const bgUpload = document.getElementById('bg-upload');
+
+    // Value Labels
+    const blurVal = document.getElementById('blur-val');
+    const brightVal = document.getElementById('bright-val');
+
+    // --- INIT ---
     function init() {
+        // Load API Data
         apiKey = localStorage.getItem('commute_api_key') || '';
         homeAddr = localStorage.getItem('commute_home_addr') || '';
         workAddr = localStorage.getItem('commute_work_addr') || '';
+        refreshRate = parseInt(localStorage.getItem('commute_refresh_rate')) || 600000;
 
-        document.getElementById('input-api-key').value = apiKey;
-        document.getElementById('input-home').value = homeAddr;
-        document.getElementById('input-work').value = workAddr;
+        // Set Input Values
+        inputApiKey.value = apiKey;
+        inputHome.value = homeAddr;
+        inputWork.value = workAddr;
+        inputRefresh.value = refreshRate;
 
+        // Load Appearance Data
+        const savedBlur = localStorage.getItem('commute_blur') || 15;
+        const savedBright = localStorage.getItem('commute_bright') || 100;
+        const savedBg = localStorage.getItem('commute_bg_image');
+
+        // Apply Appearance
+        setBlur(savedBlur);
+        setBrightness(savedBright);
+        if(savedBg) {
+            bgLayer.style.backgroundImage = `url(${savedBg})`;
+        }
+
+        // Logic Start
         if(!apiKey || !homeAddr) {
             openSettings();
         } else {
-            fetchCommuteTime();
-            setInterval(fetchCommuteTime, REFRESH_RATE);
+            startService();
         }
     }
 
+    // --- SERVICE MANAGEMENT (Resource Control) ---
+    function startService() {
+        // 1. Clear any existing timer to prevent duplicates
+        if (refreshTimer) clearInterval(refreshTimer);
+        
+        // 2. Fetch immediately
+        fetchCommuteTime();
+        
+        // 3. Start the interval (Sleeps between calls)
+        refreshTimer = setInterval(fetchCommuteTime, refreshRate);
+        console.log(`Service started. Updating every ${refreshRate/60000} minutes.`);
+    }
+
+    // --- DATA FETCHING ---
     async function fetchCommuteTime() {
         if(!apiKey) return;
 
@@ -195,10 +348,8 @@
         statusPill.innerText = 'Updating...';
         statusPill.className = 'status-pill';
 
-        // 1. Build the Google URL
+        // Using corsproxy.io to bypass CORS
         const googleUrl = `https://maps.googleapis.com/maps/api/distancematrix/json?units=imperial&origins=${encodeURIComponent(origin)}&destinations=${encodeURIComponent(destination)}&departure_time=now&key=${apiKey}`;
-        
-        // 2. Wrap it in the CORS Proxy
         const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(googleUrl)}`;
 
         try {
@@ -219,11 +370,12 @@
                 const durationTypical = element.duration.value; 
                 let cleanTime = element.duration_in_traffic.text;
 
+                // Clean Text
                 cleanTime = cleanTime.replace(' hours', 'h').replace(' hour', 'h');
-                
+                cleanTime = cleanTime.replace(' mins', 'm').replace(' min', 'm');
                 timeDisplay.innerText = cleanTime;
 
-                // --- Update Timestamp ---
+                // Update Timestamp
                 const now = new Date();
                 const timeString = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
                 footerInfo.innerText = `Updated: ${timeString}`;
@@ -251,27 +403,68 @@
         }
     }
 
+    // --- UI HELPERS ---
     function openSettings() { settingsOverlay.style.display = 'flex'; }
     function closeSettings() { settingsOverlay.style.display = 'none'; }
-
-    function saveSettings() {
-        apiKey = document.getElementById('input-api-key').value.trim();
-        homeAddr = document.getElementById('input-home').value.trim();
-        workAddr = document.getElementById('input-work').value.trim();
-
-        localStorage.setItem('commute_api_key', apiKey);
-        localStorage.setItem('commute_home_addr', homeAddr);
-        localStorage.setItem('commute_work_addr', workAddr);
-
-        closeSettings();
-        fetchCommuteTime();
-    }
 
     function toggleDirection() {
         if(!homeAddr || !workAddr) return openSettings();
         isHomeToWork = !isHomeToWork;
         routeLabel.innerText = isHomeToWork ? "HOME ➡ WORK" : "WORK ➡ HOME";
+        // Manual toggle triggers immediate fetch
         fetchCommuteTime();
+        // Reset timer to avoid double-update
+        if (refreshTimer) clearInterval(refreshTimer);
+        refreshTimer = setInterval(fetchCommuteTime, refreshRate);
+    }
+
+    // --- APPEARANCE HANDLERS ---
+    function setBlur(val) {
+        document.documentElement.style.setProperty('--glass-blur', `${val}px`);
+        inputBlur.value = val;
+        blurVal.innerText = `${val}px`;
+    }
+
+    function setBrightness(val) {
+        document.documentElement.style.setProperty('--bg-brightness', `${val}%`);
+        inputBright.value = val;
+        brightVal.innerText = `${val}%`;
+    }
+
+    inputBlur.addEventListener('input', (e) => setBlur(e.target.value));
+    inputBright.addEventListener('input', (e) => setBrightness(e.target.value));
+
+    bgUpload.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if(file) {
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                const result = evt.target.result;
+                bgLayer.style.backgroundImage = `url(${result})`;
+                try { localStorage.setItem('commute_bg_image', result); } catch(err) {}
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+
+    function saveSettings() {
+        // Save Data
+        apiKey = inputApiKey.value.trim();
+        homeAddr = inputHome.value.trim();
+        workAddr = inputWork.value.trim();
+        refreshRate = parseInt(inputRefresh.value);
+
+        localStorage.setItem('commute_api_key', apiKey);
+        localStorage.setItem('commute_home_addr', homeAddr);
+        localStorage.setItem('commute_work_addr', workAddr);
+        localStorage.setItem('commute_refresh_rate', refreshRate);
+        
+        // Save Appearance
+        localStorage.setItem('commute_blur', inputBlur.value);
+        localStorage.setItem('commute_bright', inputBright.value);
+
+        closeSettings();
+        startService(); // Restart timer with new rate
     }
 
     init();

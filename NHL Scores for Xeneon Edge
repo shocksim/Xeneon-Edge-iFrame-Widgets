@@ -49,6 +49,38 @@
             display: inline-block; animation: pulse 2s infinite;
         }
 
+        /* Attribution Header Styling */
+        .attribution-container {
+            margin-left: 8px;
+            padding-left: 8px;
+            border-left: 1px solid #444; /* Subtle divider */
+            display: flex;
+            align-items: center;
+            /* Styling for the plaintext "Powered by" */
+            color: var(--text-sub);
+            font-weight: 400;
+            font-size: 10px;
+            opacity: 0.8;
+        }
+
+        /* Spacing between text and logo link */
+        .attribution-container a {
+            margin-left: 4px;
+            display: flex;
+        }
+
+        .attribution-logo {
+            height: 12px; /* Matches text height */
+            width: auto;
+            vertical-align: middle;
+            transition: opacity 0.2s;
+            display: block;
+        }
+        
+        .attribution-logo:hover {
+            opacity: 1;
+        }
+
         /* --- Settings Button --- */
         .settings-btn {
             background: none; border: none; cursor: pointer; color: var(--text-sub);
@@ -124,26 +156,6 @@
         }
         button:hover { opacity: 0.9; }
 
-        /* --- Attribution Footer --- */
-        .attribution {
-            position: fixed; bottom: 10px; right: 15px;
-            font-size: 10px; color: var(--text-sub); opacity: 0.8;
-            pointer-events: auto;
-            display: flex; align-items: center; gap: 6px;
-            z-index: 50;
-        }
-        
-        .attribution a {
-            display: flex; align-items: center; text-decoration: none; border: none;
-        }
-
-        .espn-logo {
-            height: 12px; width: auto;
-            display: block;
-        }
-
-        .attribution a:hover { opacity: 1; }
-
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
     </style>
 </head>
@@ -153,7 +165,15 @@
     <header>
         <div class="header-left">
             <h2>NHL Scores</h2>
-            <div class="live-indicator"><span class="dot"></span> LIVE DATA</div>
+            <div class="live-indicator">
+                <span class="dot"></span> LIVE DATA
+                <div class="attribution-container">
+                    <span>Powered by</span>
+                    <a href="http://espn.go.com" target="_blank" title="Data provided by ESPN">
+                        <img src="https://a.espncdn.com/redesign/assets/img/logos/espn-404@2x.png" class="attribution-logo" alt="ESPN">
+                    </a>
+                </div>
+            </div>
         </div>
         <button class="settings-btn" onclick="openSettings()" title="Settings">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
@@ -162,13 +182,6 @@
     <div id="scoreboard">
         <div class="message">Loading scores...</div>
     </div>
-</div>
-
-<div class="attribution">
-    Data provided by 
-    <a href="http://espn.go.com" target="_blank" rel="noopener noreferrer">
-        <img src="https://github.com/shocksim/Xeneon-Edge-iFrame-Widgets/blob/main/images/ESPN_logos.png?raw=true" alt="ESPN" class="espn-logo">
-    </a>
 </div>
 
 <div id="settings-modal">

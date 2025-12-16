@@ -78,7 +78,7 @@
             display: block;
         }
         
-        .attribution-container a:hover .attribution-logo {
+        .attribution-logo:hover {
             opacity: 1;
         }
 
@@ -171,7 +171,7 @@
                 <div class="attribution-container">
                     <span>Powered by</span>
                     <a href="http://espn.go.com" target="_blank" title="Data provided by ESPN">
-                        <img src="https://github.com/shocksim/Xeneon-Edge-iFrame-Widgets/blob/main/images/ESPN_logos.png?raw=true" class="attribution-logo" alt="ESPN">
+                        <img src="https://a.espncdn.com/redesign/assets/img/logos/espn-404@2x.png" class="attribution-logo" alt="ESPN">
                     </a>
                 </div>
             </div>

@@ -22,3 +22,5 @@ The rest of them shouldn't require any extra API keys.
 ![CS2 Xeneon Edge Widget](images/3.1.png)
 
 ![CS2 Xeneon Edge Widget](images/4.png)
+
+![CS2 Xeneon Edge Widget](images/5.png)

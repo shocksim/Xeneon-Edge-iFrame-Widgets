@@ -32,13 +32,20 @@
 
         /* --- Header --- */
         header {
-            display: flex; justify-content: space-between; align-items: center;
+            display: flex; justify-content: space-between; align-items: flex-end;
             margin-bottom: 16px; padding-bottom: 8px; border-bottom: 2px solid #444;
         }
 
         .header-left { display: flex; flex-direction: column; gap: 4px; }
+        
+        /* New container for right-aligned items */
+        .header-right { display: flex; align-items: center; gap: 12px; padding-bottom: 4px;}
 
         h2 { margin: 0; font-size: 18px; text-transform: uppercase; letter-spacing: 1.2px; }
+
+        .date-display {
+            font-size: 13px; color: var(--text-sub); font-weight: 400; margin-top: 2px;
+        }
 
         .live-indicator {
             font-size: 11px; color: var(--accent); display: flex; align-items: center; gap: 6px; font-weight: 600;
@@ -51,12 +58,8 @@
 
         /* Attribution Header Styling */
         .attribution-container {
-            margin-left: 8px;
-            padding-left: 8px;
-            border-left: 1px solid #444; /* Subtle divider */
             display: flex;
             align-items: center;
-            /* Styling for the plaintext "Powered by" */
             color: var(--text-sub);
             font-weight: 400;
             font-size: 10px;
@@ -77,14 +80,13 @@
             display: block;
         }
         
-        .attribution-logo:hover {
-            opacity: 1;
-        }
+        .attribution-logo:hover { opacity: 1; }
 
         /* --- Settings Button --- */
         .settings-btn {
             background: none; border: none; cursor: pointer; color: var(--text-sub);
             padding: 8px; border-radius: 50%; transition: color 0.2s, background 0.2s;
+            display: flex; align-items: center; justify-content: center;
         }
         .settings-btn:hover { color: var(--text-main); background: rgba(255,255,255,0.1); }
         .settings-btn svg { width: 20px; height: 20px; display: block; }
@@ -131,20 +133,25 @@
 
         .modal-content {
             background: var(--bg-color); padding: 24px; border-radius: 12px;
-            width: 300px; border: 1px solid #444;
+            width: 320px; border: 1px solid #444;
             box-shadow: 0 10px 25px rgba(0,0,0,0.5);
             text-align: center;
+            max-height: 80vh; overflow-y: auto;
         }
 
         .modal-title { margin-top: 0; font-size: 18px; margin-bottom: 20px; }
         
+        .label-text {
+            text-align: left; margin-bottom: 6px; font-size: 12px; color:#aaa; display: block;
+        }
+        
         select {
-            width: 100%; padding: 10px; margin-bottom: 20px;
+            width: 100%; padding: 10px; margin-bottom: 16px;
             background: var(--card-bg); color: #fff; border: 1px solid #555;
             border-radius: 6px; font-size: 14px;
         }
 
-        .modal-actions { display: flex; gap: 10px; justify-content: center; }
+        .modal-actions { display: flex; gap: 10px; justify-content: center; margin-top: 8px;}
         
         button.primary {
             background: var(--accent); color: #000; border: none; padding: 8px 16px;
@@ -165,19 +172,23 @@
     <header>
         <div class="header-left">
             <h2>NBA Scores</h2>
+            <div id="current-date" class="date-display">Loading date...</div>
             <div class="live-indicator">
                 <span class="dot"></span> LIVE DATA
-                <div class="attribution-container">
-                    <span>Powered by</span>
-                    <a href="http://espn.go.com" target="_blank" title="Data provided by ESPN">
-                        <img src="https://a.espncdn.com/redesign/assets/img/logos/espn-404@2x.png" class="attribution-logo" alt="ESPN">
-                    </a>
-                </div>
             </div>
         </div>
-        <button class="settings-btn" onclick="openSettings()" title="Settings">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
-        </button>
+        
+        <div class="header-right">
+            <div class="attribution-container">
+                <span>Powered by</span>
+                <a href="http://espn.go.com" target="_blank" title="Data provided by ESPN">
+                    <img src="https://a.espncdn.com/redesign/assets/img/logos/espn-404@2x.png" class="attribution-logo" alt="ESPN">
+                </a>
+            </div>
+            <button class="settings-btn" onclick="openSettings()" title="Settings">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+            </button>
+        </div>
     </header>
     <div id="scoreboard">
         <div class="message">Loading scores...</div>
@@ -187,7 +198,8 @@
 <div id="settings-modal">
     <div class="modal-content">
         <h3 class="modal-title">Widget Settings</h3>
-        <div style="text-align: left; margin-bottom: 8px; font-size: 12px; color:#aaa;">Favorite Team (Pins to top)</div>
+        
+        <label for="team-selector" class="label-text">Favorite Team (Pins to top)</label>
         <select id="team-selector">
             <option value="">-- None --</option>
             <optgroup label="Eastern Conference">
@@ -225,6 +237,36 @@
                 <option value="UTAH">Utah Jazz</option>
             </optgroup>
         </select>
+
+        <label for="timezone-selector" class="label-text">Time Zone Display</label>
+        <select id="timezone-selector">
+            <option value="local">System Default (Your Time)</option>
+            <optgroup label="US & Canada">
+                <option value="America/New_York">Eastern Time (ET)</option>
+                <option value="America/Chicago">Central Time (CT)</option>
+                <option value="America/Denver">Mountain Time (MT)</option>
+                <option value="America/Los_Angeles">Pacific Time (PT)</option>
+                <option value="America/Anchorage">Alaska Time (AKT)</option>
+                <option value="Pacific/Honolulu">Hawaii-Aleutian Time (HAT)</option>
+            </optgroup>
+            <optgroup label="Europe">
+                <option value="Europe/London">London (GMT/BST)</option>
+                <option value="Europe/Paris">Central European Time (CET)</option>
+                <option value="Europe/Helsinki">Eastern European Time (EET)</option>
+                <option value="Europe/Moscow">Moscow Standard Time (MSK)</option>
+            </optgroup>
+            <optgroup label="Asia & Pacific">
+                <option value="Asia/Dubai">Gulf Standard Time (GST)</option>
+                <option value="Asia/Kolkata">India Standard Time (IST)</option>
+                <option value="Asia/Tokyo">Japan Standard Time (JST)</option>
+                <option value="Australia/Sydney">Australian Eastern Time (AET)</option>
+                <option value="Pacific/Auckland">New Zealand Time (NZT)</option>
+            </optgroup>
+            <optgroup label="Global">
+                <option value="UTC">Coordinated Universal Time (UTC)</option>
+            </optgroup>
+        </select>
+
         <div class="modal-actions">
             <button class="secondary" onclick="closeSettings()">Cancel</button>
             <button class="primary" onclick="saveSettings()">Save</button>
@@ -238,10 +280,12 @@
     
     // Config: Load from local storage
     let favoriteTeam = localStorage.getItem('nba_fav_team') || "";
+    let selectedTimezone = localStorage.getItem('nba_timezone') || "local";
 
     // -- Settings Logic --
     function openSettings() {
         document.getElementById('team-selector').value = favoriteTeam;
+        document.getElementById('timezone-selector').value = selectedTimezone;
         document.getElementById('settings-modal').style.display = 'flex';
     }
 
@@ -250,9 +294,15 @@
     }
 
     function saveSettings() {
-        const selector = document.getElementById('team-selector');
-        favoriteTeam = selector.value;
+        // Save Team
+        const teamSelector = document.getElementById('team-selector');
+        favoriteTeam = teamSelector.value;
         localStorage.setItem('nba_fav_team', favoriteTeam);
+
+        // Save Timezone
+        const tzSelector = document.getElementById('timezone-selector');
+        selectedTimezone = tzSelector.value;
+        localStorage.setItem('nba_timezone', selectedTimezone);
         
         closeSettings();
         fetchScores(); // Refresh immediately to re-sort
@@ -264,12 +314,23 @@
             const response = await fetch(API_URL);
             if (!response.ok) throw new Error('Network response was not ok');
             const data = await response.json();
+            renderDate(data);
             renderGames(data);
         } catch (error) {
             console.error("Error fetching NBA scores:", error);
             document.getElementById('scoreboard').innerHTML = 
                 '<div class="message">Unable to load scores. <br> Check console for details.</div>';
         }
+    }
+
+    function renderDate(data) {
+        let dateObj = new Date();
+        if (data.day && data.day.date) {
+            const parts = data.day.date.split('-');
+            dateObj = new Date(parts[0], parts[1] - 1, parts[2]);
+        }
+        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        document.getElementById('current-date').innerText = dateObj.toLocaleDateString('en-US', options);
     }
 
     function renderGames(data) {
@@ -297,11 +358,10 @@
                 return 0;
             });
         }
-        // ---------------------
 
         games.forEach(game => {
             const competition = game.competitions[0];
-            const status = game.status.type.shortDetail;
+            const state = game.status.type.state; // 'pre', 'in', 'post'
             const isCompleted = game.status.type.completed;
 
             const homeTeam = competition.competitors.find(c => c.homeAway === 'home');
@@ -312,19 +372,37 @@
             // Check if this card contains the favorite team
             const isFavGame = favoriteTeam && (homeTeam.team.abbreviation === favoriteTeam || awayTeam.team.abbreviation === favoriteTeam);
 
+            // --- TIMEZONE & STATUS LOGIC ---
+            let displayStatus;
+            if (state === 'pre') {
+                const gameDate = new Date(game.date);
+                
+                const timeOptions = { hour: 'numeric', minute: '2-digit' };
+                if (selectedTimezone !== 'local') {
+                    timeOptions.timeZone = selectedTimezone;
+                }
+                displayStatus = gameDate.toLocaleTimeString([], timeOptions);
+            } else {
+                displayStatus = game.status.type.shortDetail;
+            }
+
+            // --- SCORE LOGIC ---
+            const awayScore = state === 'pre' ? '-' : awayTeam.score;
+            const homeScore = state === 'pre' ? '-' : homeTeam.score;
+
             const card = document.createElement('div');
             card.className = isFavGame ? 'game-card favorite-game' : 'game-card';
             
             card.innerHTML = `
                 ${isFavGame ? '<div class="fav-star">★ FAVORITE</div>' : ''}
-                <div class="game-status">${status}</div>
+                <div class="game-status">${displayStatus}</div>
                 
                 <div class="team-row ${isCompleted && Number(awayTeam.score) < Number(homeTeam.score) ? 'loser' : 'winner'}">
                     <div class="team-info">
                         <img src="${getLogo(awayTeam.team.abbreviation)}" class="team-logo" alt="${awayTeam.team.abbreviation}" onerror="this.src='${awayTeam.team.logo}'">
                         <span class="team-name">${awayTeam.team.abbreviation}</span>
                     </div>
-                    <span class="score">${awayTeam.score}</span>
+                    <span class="score">${awayScore}</span>
                 </div>
 
                 <div class="team-row ${isCompleted && Number(homeTeam.score) < Number(awayTeam.score) ? 'loser' : 'winner'}">
@@ -332,7 +410,7 @@
                         <img src="${getLogo(homeTeam.team.abbreviation)}" class="team-logo" alt="${homeTeam.team.abbreviation}" onerror="this.src='${homeTeam.team.logo}'">
                         <span class="team-name">${homeTeam.team.abbreviation}</span>
                     </div>
-                    <span class="score">${homeTeam.score}</span>
+                    <span class="score">${homeScore}</span>
                 </div>
             `;
 

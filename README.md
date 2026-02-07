@@ -1,4 +1,4 @@
-FYI - We're in the process of building out our documentation that will allow you to convert any iframes to true iCUE widgets or code your own HTML-based widgets for iCUE directly. We're also working on the methods and modes to allow icue to import these widgets in the future. - Feb'7'26 - shocksim
+FYI - We're in the process of building out our documentation that will allow you to convert any iframes to true iCUE widgets or code your own HTML-based widgets for iCUE directly, hence the lack of commits. We're also working on the methods and modes to allow icue to import these widgets in the future. - Feb'7'26 - shocksim
 
 ![nfl xeneon edge widget](images/1.png)
 
